@@ -1,0 +1,84 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstackclusterstackreleases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstackclusterstackreleases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstackclusterstackreleases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstackclusterstackreleasetemplates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstackclusterstackreleasetemplates/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstackclusterstackreleasetemplates/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstacknodeimagereleases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstacknodeimagereleases/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstacknodeimagereleases/status
+  verbs:
+  - get
+  - patch
+  - update

@@ -1,0 +1,164 @@
+name: Release
+on:
+  push:
+    tags:
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+env:
+  REGISTRY: ghcr.io/sovereigncloudstack
+  metadata_flavor: latest=true
+  metadata_tags: type=ref,event=tag
+permissions:
+  contents: write
+  packages: write
+  # Required to generate OIDC tokens for `sigstore/cosign-installer` authentication
+  id-token: write
+jobs:
+  manager-image:
+    name: Build and push manager image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-go
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3
+
+      - name: Generate metadata cspo
+        id: metacspo
+        uses: ./.github/actions/metadata
+        env:
+          IMAGE_NAME: cspo
+        with:
+          metadata_flavor: ${{ env.metadata_flavor }}
+          metadata_tags: ${{ env.metadata_tags }}
+
+      - name: Login to ghcr.io for CI
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@1fc5bd396d372bee37d608f955b336615edf79c8 # v3.2.0
+
+      - name: Install Bom
+        shell: bash
+        run: |
+          curl -L https://github.com/kubernetes-sigs/bom/releases/download/v0.4.1/bom-linux-amd64 -o bom
+          sudo mv ./bom /usr/local/bin/bom
+          sudo chmod +x /usr/local/bin/bom
+
+      - name: Setup Env
+        run: |
+          echo 'DOCKER_BUILD_LDFLAGS<<EOF' >> $GITHUB_ENV
+          echo $DOCKER_BUILD_LDFLAGS >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+
+      - name: Build and push cspo image
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5
+        id: docker_build_release_cspo
+        with:
+          provenance: false
+          context: .
+          file: ./images/cspo/Dockerfile
+          push: true
+          build-args: |
+            LDFLAGS=${{ env.DOCKER_BUILD_LDFLAGS }}
+          tags: ${{ steps.metacspo.outputs.tags }}
+          labels: ${{ steps.metacspo.outputs.labels }}
+          platforms: linux/amd64
+          cache-from: type=gha, scope=${{ github.workflow }}
+          cache-to: type=gha, mode=max, scope=${{ github.workflow }}
+
+
+      - name: Sign Container Images
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          cosign sign --yes ghcr.io/sovereigncloudstack/cspo@${{ steps.docker_build_release_cspo.outputs.digest }}
+
+      - name: Generate SBOM cspo
+        shell: bash
+        # To-Do: generate SBOM from source after https://github.com/kubernetes-sigs/bom/issues/202 is fixed
+        # To-Do: format SBOM output to json after cosign v2.0 is released with https://github.com/sigstore/cosign/pull/2479
+        run: |
+          bom generate -o sbom_ci_main_cspo_${{ steps.metacspo.outputs.version }}.spdx \
+          --image=ghcr.io/sovereigncloudstack/cspo:${{ steps.metacspo.outputs.version }}
+
+      - name: Attach SBOM to Container Images cspo
+        run: |
+          cosign attach sbom --sbom sbom_ci_main_cspo_${{ steps.metacspo.outputs.version }}.spdx ghcr.io/sovereigncloudstack/cspo@${{ steps.docker_build_release_cspo.outputs.digest }}
+
+      - name: Sign SBOM Images cspo
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          docker_build_release_digest="${{ steps.docker_build_release_cspo.outputs.digest }}"
+          image_name="ghcr.io/sovereigncloudstack/cspo:${docker_build_release_digest/:/-}.sbom"
+          docker_build_release_sbom_digest="sha256:$(docker buildx imagetools inspect --raw ${image_name} | sha256sum | head -c 64)"
+          cosign sign --yes "ghcr.io/sovereigncloudstack/cspo@${docker_build_release_sbom_digest}"
+
+      - name: Image Releases digests cspo
+        shell: bash
+        run: |
+          mkdir -p image-digest/
+          echo "ghcr.io/sovereigncloudstack/cspo:{{ steps.metacspo.outputs.version }}@${{ steps.docker_build_release_cspo.outputs.digest }}" >> image-digest/cspo.txt
+
+      # Upload artifact digests
+      - name: Upload artifact digests
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        with:
+          name: image-digest cspo
+          path: image-digest
+          retention-days: 90
+
+      - name: Image Digests Output
+        shell: bash
+        run: |
+          cd image-digest/
+          find -type f | sort | xargs -d '\n' cat
+
+  release:
+    name: Create draft release
+    runs-on: ubuntu-latest
+    needs:
+      - manager-image
+    steps:
+      - name: Set env
+        run: echo "RELEASE_TAG=${GITHUB_REF:10}" >> $GITHUB_ENV
+
+      - name: checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Install go
+        uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4.1.0
+        with:
+          go-version-file: "go.mod"
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: install kustomize
+        run: |
+          make kustomize
+
+      - name: generate release artifacts
+        run: |
+          make release
+
+      - name: generate release notes
+        run: |
+          make release-notes
+
+      - name: Release
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
+        with:
+          draft: true
+          files: out/*
+          body_path: _releasenotes/${{ env.RELEASE_TAG }}.md

@@ -1,0 +1,27 @@
+# permissions for end users to view openstackclusterstackreleases.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: openstackclusterstackrelease-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: cspo
+    app.kubernetes.io/part-of: cspo
+    app.kubernetes.io/managed-by: kustomize
+  name: openstackclusterstackrelease-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstackclusterstackreleases
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstackclusterstackreleases/status
+  verbs:
+  - get
