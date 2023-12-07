@@ -1,0 +1,27 @@
+# permissions for end users to view openstacknodeimagereleases.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: openstacknodeimagerelease-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: cspo
+    app.kubernetes.io/part-of: cspo
+    app.kubernetes.io/managed-by: kustomize
+  name: openstacknodeimagerelease-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstacknodeimagereleases
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  resources:
+  - openstacknodeimagereleases/status
+  verbs:
+  - get

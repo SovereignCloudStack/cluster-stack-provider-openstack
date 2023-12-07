@@ -1,0 +1,14 @@
+{
+  "dirs_to_skip": [
+    "tilt_modules",
+    "api/v1alpha1/zz_generated.deepcopy.go",
+    "hack/ci-e2e-get-token.sh",
+    "hack/tools/",
+    "vendor",
+    ".cache",
+    ".pkg"
+  ],
+  "not_generated_files_to_skip": [
+    "hack/boilerplate/boilerplate.py"
+  ]
+}
