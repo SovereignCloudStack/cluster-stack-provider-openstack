@@ -19,7 +19,7 @@ package controller
 import (
 	"context"
 
-	infrav1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
+	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,7 +48,7 @@ type OpenStackClusterStackReleaseReconciler struct {
 func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	openstackclusterstackrelease := &infrav1alpha1.OpenStackClusterStackRelease{}
+	openstackclusterstackrelease := &apiv1alpha1.OpenStackClusterStackRelease{}
 	_ = r.Client.Get(ctx, req.NamespacedName, openstackclusterstackrelease)
 
 	// TODO(user): your logic here
@@ -59,6 +59,6 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OpenStackClusterStackReleaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&infrav1alpha1.OpenStackClusterStackRelease{}).
+		For(&apiv1alpha1.OpenStackClusterStackRelease{}).
 		Complete(r)
 }
