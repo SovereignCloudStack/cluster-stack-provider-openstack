@@ -34,12 +34,14 @@ type OpenstackClusterStackReleaseSpec struct {
 
 // OpenstackClusterStackReleaseStatus defines the observed state of OpenstackClusterStackRelease.
 type OpenstackClusterStackReleaseStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// +optional
+	// +kubebuilder:default:=false
+	Ready bool `json:"ready,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready"
 
 // OpenstackClusterStackRelease is the Schema for the openstackclusterstackreleases API.
 type OpenstackClusterStackRelease struct {
