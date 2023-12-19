@@ -87,25 +87,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.OpenstackClusterStackReleaseReconciler{
+	if err = (&controller.OpenStackClusterStackReleaseReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OpenstackClusterStackRelease")
+		setupLog.Error(err, "unable to create controller", "controller", "OpenStackClusterStackRelease")
 		os.Exit(1)
 	}
-	if err = (&controller.OpenstackClusterStackReleaseTemplateReconciler{
+	if err = (&controller.OpenStackClusterStackReleaseTemplateReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OpenstackClusterStackReleaseTemplate")
+		setupLog.Error(err, "unable to create controller", "controller", "OpenStackClusterStackReleaseTemplate")
 		os.Exit(1)
 	}
-	if err = (&controller.OpenstackNodeImageReleaseReconciler{
+	if err = (&controller.OpenStackNodeImageReleaseReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OpenstackNodeImageRelease")
+		setupLog.Error(err, "unable to create controller", "controller", "OpenStackNodeImageRelease")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

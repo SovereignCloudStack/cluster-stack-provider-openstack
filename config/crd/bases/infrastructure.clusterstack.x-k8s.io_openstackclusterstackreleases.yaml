@@ -8,8 +8,8 @@ metadata:
 spec:
   group: infrastructure.clusterstack.x-k8s.io
   names:
-    kind: OpenstackClusterStackRelease
-    listKind: OpenstackClusterStackReleaseList
+    kind: OpenStackClusterStackRelease
+    listKind: OpenStackClusterStackReleaseList
     plural: openstackclusterstackreleases
     singular: openstackclusterstackrelease
   scope: Namespaced
@@ -21,7 +21,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: OpenstackClusterStackRelease is the Schema for the openstackclusterstackreleases
+        description: OpenStackClusterStackRelease is the Schema for the openstackclusterstackreleases
           API.
         properties:
           apiVersion:
@@ -37,17 +37,17 @@ spec:
           metadata:
             type: object
           spec:
-            description: OpenstackClusterStackReleaseSpec defines the desired state
-              of OpenstackClusterStackRelease.
+            description: OpenStackClusterStackReleaseSpec defines the desired state
+              of OpenStackClusterStackRelease.
             properties:
               foo:
-                description: Foo is an example field of OpenstackClusterStackRelease.
+                description: Foo is an example field of OpenStackClusterStackRelease.
                   Edit openstackclusterstackrelease_types.go to remove/update
                 type: string
             type: object
           status:
-            description: OpenstackClusterStackReleaseStatus defines the observed state
-              of OpenstackClusterStackRelease.
+            description: OpenStackClusterStackReleaseStatus defines the observed state
+              of OpenStackClusterStackRelease.
             properties:
               ready:
                 default: false

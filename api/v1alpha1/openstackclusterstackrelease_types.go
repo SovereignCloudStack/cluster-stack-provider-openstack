@@ -23,17 +23,17 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// OpenstackClusterStackReleaseSpec defines the desired state of OpenstackClusterStackRelease.
-type OpenstackClusterStackReleaseSpec struct {
+// OpenStackClusterStackReleaseSpec defines the desired state of OpenStackClusterStackRelease.
+type OpenStackClusterStackReleaseSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of OpenstackClusterStackRelease. Edit openstackclusterstackrelease_types.go to remove/update
+	// Foo is an example field of OpenStackClusterStackRelease. Edit openstackclusterstackrelease_types.go to remove/update
 	Foo string `json:"foo,omitempty"`
 }
 
-// OpenstackClusterStackReleaseStatus defines the observed state of OpenstackClusterStackRelease.
-type OpenstackClusterStackReleaseStatus struct {
+// OpenStackClusterStackReleaseStatus defines the observed state of OpenStackClusterStackRelease.
+type OpenStackClusterStackReleaseStatus struct {
 	// +optional
 	// +kubebuilder:default:=false
 	Ready bool `json:"ready,omitempty"`
@@ -43,24 +43,24 @@ type OpenstackClusterStackReleaseStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready"
 
-// OpenstackClusterStackRelease is the Schema for the openstackclusterstackreleases API.
-type OpenstackClusterStackRelease struct {
+// OpenStackClusterStackRelease is the Schema for the openstackclusterstackreleases API.
+type OpenStackClusterStackRelease struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   OpenstackClusterStackReleaseSpec   `json:"spec,omitempty"`
-	Status OpenstackClusterStackReleaseStatus `json:"status,omitempty"`
+	Spec   OpenStackClusterStackReleaseSpec   `json:"spec,omitempty"`
+	Status OpenStackClusterStackReleaseStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// OpenstackClusterStackReleaseList contains a list of OpenstackClusterStackRelease.
-type OpenstackClusterStackReleaseList struct {
+// OpenStackClusterStackReleaseList contains a list of OpenStackClusterStackRelease.
+type OpenStackClusterStackReleaseList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []OpenstackClusterStackRelease `json:"items"`
+	Items           []OpenStackClusterStackRelease `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&OpenstackClusterStackRelease{}, &OpenstackClusterStackReleaseList{})
+	SchemeBuilder.Register(&OpenStackClusterStackRelease{}, &OpenStackClusterStackReleaseList{})
 }

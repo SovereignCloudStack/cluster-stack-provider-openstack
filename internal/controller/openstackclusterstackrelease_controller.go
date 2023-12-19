@@ -26,8 +26,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// OpenstackClusterStackReleaseReconciler reconciles a OpenstackClusterStackRelease object.
-type OpenstackClusterStackReleaseReconciler struct {
+// OpenStackClusterStackReleaseReconciler reconciles a OpenStackClusterStackRelease object.
+type OpenStackClusterStackReleaseReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -39,16 +39,16 @@ type OpenstackClusterStackReleaseReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the OpenstackClusterStackRelease object against the actual cluster state, and then
+// the OpenStackClusterStackRelease object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
-func (r *OpenstackClusterStackReleaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	openstackclusterstackrelease := &infrav1alpha1.OpenstackClusterStackRelease{}
+	openstackclusterstackrelease := &infrav1alpha1.OpenStackClusterStackRelease{}
 	_ = r.Client.Get(ctx, req.NamespacedName, openstackclusterstackrelease)
 
 	// TODO(user): your logic here
@@ -57,8 +57,8 @@ func (r *OpenstackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *OpenstackClusterStackReleaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *OpenStackClusterStackReleaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&infrav1alpha1.OpenstackClusterStackRelease{}).
+		For(&infrav1alpha1.OpenStackClusterStackRelease{}).
 		Complete(r)
 }
