@@ -45,10 +45,32 @@ spec:
                     description: OpenStackClusterStackReleaseSpec defines the desired
                       state of OpenStackClusterStackRelease.
                     properties:
-                      foo:
-                        description: Foo is an example field of OpenStackClusterStackRelease.
-                          Edit openstackclusterstackrelease_types.go to remove/update
+                      cloudName:
+                        description: The name of the cloud to use from the clouds
+                          secret
                         type: string
+                      identityRef:
+                        description: IdentityRef is a reference to a identity to be
+                          used when reconciling this cluster
+                        properties:
+                          kind:
+                            description: Kind of the identity. Must be supported by
+                              the infrastructure provider and may be either cluster
+                              or namespace-scoped.
+                            minLength: 1
+                            type: string
+                          name:
+                            description: Name of the infrastructure identity to be
+                              used. Must be either a cluster-scoped resource, or namespaced-scoped
+                              resource the same namespace as the resource(s) being
+                              provisioned.
+                            type: string
+                        required:
+                        - kind
+                        - name
+                        type: object
+                    required:
+                    - cloudName
                     type: object
                 required:
                 - spec
