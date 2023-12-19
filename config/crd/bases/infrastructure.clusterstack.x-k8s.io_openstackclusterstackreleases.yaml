@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.13.0
-  name: openstackclusterstackreleases.infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  name: openstackclusterstackreleases.infrastructure.clusterstack.x-k8s.io
 spec:
-  group: infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  group: infrastructure.clusterstack.x-k8s.io
   names:
     kind: OpenstackClusterStackRelease
     listKind: OpenstackClusterStackReleaseList

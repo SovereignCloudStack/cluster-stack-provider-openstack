@@ -32,9 +32,9 @@ type OpenstackClusterStackReleaseTemplateReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io,resources=openstackclusterstackreleasetemplates,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io,resources=openstackclusterstackreleasetemplates/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io,resources=openstackclusterstackreleasetemplates/finalizers,verbs=update
+//+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io,resources=openstackclusterstackreleasetemplates,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io,resources=openstackclusterstackreleasetemplates/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io,resources=openstackclusterstackreleasetemplates/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

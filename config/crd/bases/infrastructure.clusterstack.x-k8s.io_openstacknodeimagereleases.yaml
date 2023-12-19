@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.13.0
-  name: openstackclusterstackreleasetemplates.infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  name: openstacknodeimagereleases.infrastructure.clusterstack.x-k8s.io
 spec:
-  group: infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  group: infrastructure.clusterstack.x-k8s.io
   names:
-    kind: OpenstackClusterStackReleaseTemplate
-    listKind: OpenstackClusterStackReleaseTemplateList
-    plural: openstackclusterstackreleasetemplates
-    singular: openstackclusterstackreleasetemplate
+    kind: OpenstackNodeImageRelease
+    listKind: OpenstackNodeImageReleaseList
+    plural: openstacknodeimagereleases
+    singular: openstacknodeimagerelease
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: OpenstackClusterStackReleaseTemplate is the Schema for the openstackclusterstackreleasetemplates
+        description: OpenstackNodeImageRelease is the Schema for the openstacknodeimagereleases
           API.
         properties:
           apiVersion:
@@ -33,17 +33,17 @@ spec:
           metadata:
             type: object
           spec:
-            description: OpenstackClusterStackReleaseTemplateSpec defines the desired
-              state of OpenstackClusterStackReleaseTemplate.
+            description: OpenstackNodeImageReleaseSpec defines the desired state of
+              OpenstackNodeImageRelease.
             properties:
               foo:
-                description: Foo is an example field of OpenstackClusterStackReleaseTemplate.
-                  Edit openstackclusterstackreleasetemplate_types.go to remove/update
+                description: Foo is an example field of OpenstackNodeImageRelease.
+                  Edit openstacknodeimagerelease_types.go to remove/update
                 type: string
             type: object
           status:
-            description: OpenstackClusterStackReleaseTemplateStatus defines the observed
-              state of OpenstackClusterStackReleaseTemplate.
+            description: OpenstackNodeImageReleaseStatus defines the observed state
+              of OpenstackNodeImageRelease.
             type: object
         type: object
     served: true
