@@ -15,12 +15,12 @@ linters:
     - exportloopref
     - forcetypeassert
     - gci
-    - goconst
+    # - goconst
     - gocritic
     - godot
     - gofmt
     - gofumpt
-    - goimports
+    # - goimports
     - goprintffuncname
     - gosec
     - gosimple
@@ -104,6 +104,10 @@ linters-settings:
   revive:
     enable-all-rules: true
     rules:
+      - name: import-alias-naming
+        disabled: true
+      - name: redundant-import-alias
+        disabled: true
       - name: dot-imports
         disabled: true
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#add-constant

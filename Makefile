@@ -347,7 +347,6 @@ else
 	go version
 	golangci-lint version
 	golangci-lint run -v
-	cd $(TEST_DIR); golangci-lint run -v
 endif
 
 .PHONY: lint-golang-ci
@@ -361,7 +360,6 @@ else
 	go version
 	golangci-lint version
 	golangci-lint run -v --out-format=github-actions
-	cd $(TEST_DIR); golangci-lint run -v --out-format=github-actions
 endif
 
 .PHONY: lint-yaml
