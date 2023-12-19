@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Build the manager binary
-FROM --platform=${BUILDPLATFORM} docker.io/library/golang:1.21.4-bullseye as build
+FROM --platform=${BUILDPLATFORM} docker.io/library/golang:1.21.5-bullseye as build
 ARG TARGETOS TARGETARCH
 
 COPY . /src/cluster-stack-provider-openstack
@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/root/.cache --mount=type=cache,target=/go/pkg \
     go build -mod=vendor -trimpath -ldflags "-s -w ${LDFLAGS} -extldflags '-static'" \
     -o manager cmd/main.go
 
-FROM --platform=${BUILDPLATFORM} docker.io/library/alpine:3.18.4
+FROM --platform=${BUILDPLATFORM} docker.io/library/alpine:3.19.0
 WORKDIR /
 COPY --from=build /src/cluster-stack-provider-openstack/manager .
 
