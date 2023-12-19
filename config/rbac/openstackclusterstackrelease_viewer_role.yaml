@@ -12,7 +12,7 @@ metadata:
   name: openstackclusterstackrelease-viewer-role
 rules:
 - apiGroups:
-  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  - infrastructure.clusterstack.x-k8s.io
   resources:
   - openstackclusterstackreleases
   verbs:
@@ -20,7 +20,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  - infrastructure.clusterstack.x-k8s.io
   resources:
   - openstackclusterstackreleases/status
   verbs:

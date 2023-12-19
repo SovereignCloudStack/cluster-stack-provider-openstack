@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.13.0
-  name: openstackclusterstackreleases.infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  name: openstackclusterstackreleases.infrastructure.clusterstack.x-k8s.io
 spec:
-  group: infrastructure.clusterstack.x-k8s.io.clusterstack.x-k8s.io
+  group: infrastructure.clusterstack.x-k8s.io
   names:
     kind: OpenstackClusterStackRelease
     listKind: OpenstackClusterStackReleaseList
@@ -14,7 +14,11 @@ spec:
     singular: openstackclusterstackrelease
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.ready
+      name: Ready
+      type: boolean
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OpenstackClusterStackRelease is the Schema for the openstackclusterstackreleases
@@ -44,6 +48,10 @@ spec:
           status:
             description: OpenstackClusterStackReleaseStatus defines the observed state
               of OpenstackClusterStackRelease.
+            properties:
+              ready:
+                default: false
+                type: boolean
             type: object
         type: object
     served: true
