@@ -20,7 +20,7 @@ package controller
 import (
 	"context"
 
-	infrastructureclusterstackxk8siov1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
+	infrav1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -49,7 +49,8 @@ type OpenstackNodeImageReleaseReconciler struct {
 func (r *OpenstackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	openstacknodeimagerelease := infrav1alpha1.OpenstackNodeImageRelease{}
+	_ = r.Client.Get(ctx, req.NamespacedName, &openstacknodeimagerelease)
 
 	return ctrl.Result{}, nil
 }
@@ -57,6 +58,6 @@ func (r *OpenstackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 // SetupWithManager sets up the controller with the Manager.
 func (r *OpenstackNodeImageReleaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&infrastructureclusterstackxk8siov1alpha1.OpenstackNodeImageRelease{}).
+		For(&infrav1alpha1.OpenstackNodeImageRelease{}).
 		Complete(r)
 }
