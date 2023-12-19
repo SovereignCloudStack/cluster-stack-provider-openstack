@@ -25,11 +25,12 @@ import (
 
 // OpenstackClusterStackReleaseTemplateSpec defines the desired state of OpenstackClusterStackReleaseTemplate.
 type OpenstackClusterStackReleaseTemplateSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Template OpenstackClusterStackReleaseTemplateResource `json:"template"`
+}
 
-	// Foo is an example field of OpenstackClusterStackReleaseTemplate. Edit openstackclusterstackreleasetemplate_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+// OpenstackClusterStackReleaseTemplateResource describes the data needed to create a OpenstackClusterStackRelease from a template.
+type OpenstackClusterStackReleaseTemplateResource struct {
+	Spec OpenstackClusterStackReleaseSpec `json:"spec"`
 }
 
 // OpenstackClusterStackReleaseTemplateStatus defines the observed state of OpenstackClusterStackReleaseTemplate.
