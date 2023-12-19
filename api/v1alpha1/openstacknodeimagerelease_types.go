@@ -23,17 +23,17 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// OpenstackNodeImageReleaseSpec defines the desired state of OpenstackNodeImageRelease.
-type OpenstackNodeImageReleaseSpec struct {
+// OpenStackNodeImageReleaseSpec defines the desired state of OpenStackNodeImageRelease.
+type OpenStackNodeImageReleaseSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of OpenstackNodeImageRelease. Edit openstacknodeimagerelease_types.go to remove/update
+	// Foo is an example field of OpenStackNodeImageRelease. Edit openstacknodeimagerelease_types.go to remove/update
 	Foo string `json:"foo,omitempty"`
 }
 
-// OpenstackNodeImageReleaseStatus defines the observed state of OpenstackNodeImageRelease.
-type OpenstackNodeImageReleaseStatus struct {
+// OpenStackNodeImageReleaseStatus defines the observed state of OpenStackNodeImageRelease.
+type OpenStackNodeImageReleaseStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
@@ -41,24 +41,24 @@ type OpenstackNodeImageReleaseStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// OpenstackNodeImageRelease is the Schema for the openstacknodeimagereleases API.
-type OpenstackNodeImageRelease struct {
+// OpenStackNodeImageRelease is the Schema for the openstacknodeimagereleases API.
+type OpenStackNodeImageRelease struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   OpenstackNodeImageReleaseSpec   `json:"spec,omitempty"`
-	Status OpenstackNodeImageReleaseStatus `json:"status,omitempty"`
+	Spec   OpenStackNodeImageReleaseSpec   `json:"spec,omitempty"`
+	Status OpenStackNodeImageReleaseStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// OpenstackNodeImageReleaseList contains a list of OpenstackNodeImageRelease.
-type OpenstackNodeImageReleaseList struct {
+// OpenStackNodeImageReleaseList contains a list of OpenStackNodeImageRelease.
+type OpenStackNodeImageReleaseList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []OpenstackNodeImageRelease `json:"items"`
+	Items           []OpenStackNodeImageRelease `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&OpenstackNodeImageRelease{}, &OpenstackNodeImageReleaseList{})
+	SchemeBuilder.Register(&OpenStackNodeImageRelease{}, &OpenStackNodeImageReleaseList{})
 }

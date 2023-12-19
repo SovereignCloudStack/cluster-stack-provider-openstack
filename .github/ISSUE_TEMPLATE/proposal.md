@@ -22,10 +22,10 @@ As a [developer/user/operator] I would like to [high level description] for [rea
 
 **Contract changes [optional]**
 
-[Describe contract changes between SCS Cluster Stack Provider Openstack controllers, if applicable.]
+[Describe contract changes between SCS Cluster Stack Provider OpenStack controllers, if applicable.]
 
 **Data model changes [optional]**
 
-[Describe contract changes between SCS Cluster Stack Provider Openstack controllers, if applicable.]
+[Describe contract changes between SCS Cluster Stack Provider OpenStack controllers, if applicable.]
 
 /kind proposal

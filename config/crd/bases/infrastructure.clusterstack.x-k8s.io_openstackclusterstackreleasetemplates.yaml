@@ -8,8 +8,8 @@ metadata:
 spec:
   group: infrastructure.clusterstack.x-k8s.io
   names:
-    kind: OpenstackClusterStackReleaseTemplate
-    listKind: OpenstackClusterStackReleaseTemplateList
+    kind: OpenStackClusterStackReleaseTemplate
+    listKind: OpenStackClusterStackReleaseTemplateList
     plural: openstackclusterstackreleasetemplates
     singular: openstackclusterstackreleasetemplate
   scope: Namespaced
@@ -17,7 +17,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: OpenstackClusterStackReleaseTemplate is the Schema for the openstackclusterstackreleasetemplates
+        description: OpenStackClusterStackReleaseTemplate is the Schema for the openstackclusterstackreleasetemplates
           API.
         properties:
           apiVersion:
@@ -33,20 +33,20 @@ spec:
           metadata:
             type: object
           spec:
-            description: OpenstackClusterStackReleaseTemplateSpec defines the desired
-              state of OpenstackClusterStackReleaseTemplate.
+            description: OpenStackClusterStackReleaseTemplateSpec defines the desired
+              state of OpenStackClusterStackReleaseTemplate.
             properties:
               template:
-                description: OpenstackClusterStackReleaseTemplateResource describes
-                  the data needed to create a OpenstackClusterStackRelease from a
+                description: OpenStackClusterStackReleaseTemplateResource describes
+                  the data needed to create a OpenStackClusterStackRelease from a
                   template.
                 properties:
                   spec:
-                    description: OpenstackClusterStackReleaseSpec defines the desired
-                      state of OpenstackClusterStackRelease.
+                    description: OpenStackClusterStackReleaseSpec defines the desired
+                      state of OpenStackClusterStackRelease.
                     properties:
                       foo:
-                        description: Foo is an example field of OpenstackClusterStackRelease.
+                        description: Foo is an example field of OpenStackClusterStackRelease.
                           Edit openstackclusterstackrelease_types.go to remove/update
                         type: string
                     type: object
@@ -57,8 +57,8 @@ spec:
             - template
             type: object
           status:
-            description: OpenstackClusterStackReleaseTemplateStatus defines the observed
-              state of OpenstackClusterStackReleaseTemplate.
+            description: OpenStackClusterStackReleaseTemplateStatus defines the observed
+              state of OpenStackClusterStackReleaseTemplate.
             type: object
         type: object
     served: true

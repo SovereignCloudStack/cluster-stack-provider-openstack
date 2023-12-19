@@ -14,7 +14,7 @@ resources:
   controller: true
   domain: clusterstack.x-k8s.io
   group: infrastructure.clusterstack.x-k8s.io
-  kind: OpenstackClusterStackRelease
+  kind: OpenStackClusterStackRelease
   path: github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1
   version: v1alpha1
 - api:
@@ -23,7 +23,7 @@ resources:
   controller: true
   domain: clusterstack.x-k8s.io
   group: infrastructure.clusterstack.x-k8s.io
-  kind: OpenstackClusterStackReleaseTemplate
+  kind: OpenStackClusterStackReleaseTemplate
   path: github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1
   version: v1alpha1
 - api:
@@ -32,7 +32,7 @@ resources:
   controller: true
   domain: clusterstack.x-k8s.io
   group: infrastructure.clusterstack.x-k8s.io
-  kind: OpenstackNodeImageRelease
+  kind: OpenStackNodeImageRelease
   path: github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1
   version: v1alpha1
 version: "3"

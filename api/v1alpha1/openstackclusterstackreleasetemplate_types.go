@@ -23,18 +23,18 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// OpenstackClusterStackReleaseTemplateSpec defines the desired state of OpenstackClusterStackReleaseTemplate.
-type OpenstackClusterStackReleaseTemplateSpec struct {
-	Template OpenstackClusterStackReleaseTemplateResource `json:"template"`
+// OpenStackClusterStackReleaseTemplateSpec defines the desired state of OpenStackClusterStackReleaseTemplate.
+type OpenStackClusterStackReleaseTemplateSpec struct {
+	Template OpenStackClusterStackReleaseTemplateResource `json:"template"`
 }
 
-// OpenstackClusterStackReleaseTemplateResource describes the data needed to create a OpenstackClusterStackRelease from a template.
-type OpenstackClusterStackReleaseTemplateResource struct {
-	Spec OpenstackClusterStackReleaseSpec `json:"spec"`
+// OpenStackClusterStackReleaseTemplateResource describes the data needed to create a OpenStackClusterStackRelease from a template.
+type OpenStackClusterStackReleaseTemplateResource struct {
+	Spec OpenStackClusterStackReleaseSpec `json:"spec"`
 }
 
-// OpenstackClusterStackReleaseTemplateStatus defines the observed state of OpenstackClusterStackReleaseTemplate.
-type OpenstackClusterStackReleaseTemplateStatus struct {
+// OpenStackClusterStackReleaseTemplateStatus defines the observed state of OpenStackClusterStackReleaseTemplate.
+type OpenStackClusterStackReleaseTemplateStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
@@ -42,24 +42,24 @@ type OpenstackClusterStackReleaseTemplateStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// OpenstackClusterStackReleaseTemplate is the Schema for the openstackclusterstackreleasetemplates API.
-type OpenstackClusterStackReleaseTemplate struct {
+// OpenStackClusterStackReleaseTemplate is the Schema for the openstackclusterstackreleasetemplates API.
+type OpenStackClusterStackReleaseTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   OpenstackClusterStackReleaseTemplateSpec   `json:"spec,omitempty"`
-	Status OpenstackClusterStackReleaseTemplateStatus `json:"status,omitempty"`
+	Spec   OpenStackClusterStackReleaseTemplateSpec   `json:"spec,omitempty"`
+	Status OpenStackClusterStackReleaseTemplateStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// OpenstackClusterStackReleaseTemplateList contains a list of OpenstackClusterStackReleaseTemplate.
-type OpenstackClusterStackReleaseTemplateList struct {
+// OpenStackClusterStackReleaseTemplateList contains a list of OpenStackClusterStackReleaseTemplate.
+type OpenStackClusterStackReleaseTemplateList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []OpenstackClusterStackReleaseTemplate `json:"items"`
+	Items           []OpenStackClusterStackReleaseTemplate `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&OpenstackClusterStackReleaseTemplate{}, &OpenstackClusterStackReleaseTemplateList{})
+	SchemeBuilder.Register(&OpenStackClusterStackReleaseTemplate{}, &OpenStackClusterStackReleaseTemplateList{})
 }

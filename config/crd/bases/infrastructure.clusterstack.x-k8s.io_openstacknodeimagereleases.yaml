@@ -8,8 +8,8 @@ metadata:
 spec:
   group: infrastructure.clusterstack.x-k8s.io
   names:
-    kind: OpenstackNodeImageRelease
-    listKind: OpenstackNodeImageReleaseList
+    kind: OpenStackNodeImageRelease
+    listKind: OpenStackNodeImageReleaseList
     plural: openstacknodeimagereleases
     singular: openstacknodeimagerelease
   scope: Namespaced
@@ -17,7 +17,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: OpenstackNodeImageRelease is the Schema for the openstacknodeimagereleases
+        description: OpenStackNodeImageRelease is the Schema for the openstacknodeimagereleases
           API.
         properties:
           apiVersion:
@@ -33,17 +33,17 @@ spec:
           metadata:
             type: object
           spec:
-            description: OpenstackNodeImageReleaseSpec defines the desired state of
-              OpenstackNodeImageRelease.
+            description: OpenStackNodeImageReleaseSpec defines the desired state of
+              OpenStackNodeImageRelease.
             properties:
               foo:
-                description: Foo is an example field of OpenstackNodeImageRelease.
+                description: Foo is an example field of OpenStackNodeImageRelease.
                   Edit openstacknodeimagerelease_types.go to remove/update
                 type: string
             type: object
           status:
-            description: OpenstackNodeImageReleaseStatus defines the observed state
-              of OpenstackNodeImageRelease.
+            description: OpenStackNodeImageReleaseStatus defines the observed state
+              of OpenStackNodeImageRelease.
             type: object
         type: object
     served: true
