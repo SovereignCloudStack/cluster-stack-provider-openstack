@@ -563,5 +563,5 @@ builder-image-push: ## Build $(CONTROLLER_SHORT)-builder to a new version. For m
 # test: test-unit test-integration ## Runs all unit and integration tests.
 
 .PHONY: tilt-up
-tilt-up:  $(ENVSUBST) $(KUBECTL) $(KUSTOMIZE) $(TILT) cluster  ## Start a mgt-cluster & Tilt. Installs the CRDs and deploys the controllers
+tilt-up: env-vars-for-wl-cluster $(ENVSUBST) $(KUBECTL) $(KUSTOMIZE) $(TILT) cluster  ## Start a mgt-cluster & Tilt. Installs the CRDs and deploys the controllers
 	EXP_CLUSTER_RESOURCE_SET=true $(TILT) up --port=10351
