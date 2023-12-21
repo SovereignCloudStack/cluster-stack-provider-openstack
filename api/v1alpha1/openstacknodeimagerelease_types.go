@@ -18,6 +18,8 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apiv1alpha7 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -25,17 +27,21 @@ import (
 
 // OpenStackNodeImageReleaseSpec defines the desired state of OpenStackNodeImageRelease.
 type OpenStackNodeImageReleaseSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of OpenStackNodeImageRelease. Edit openstacknodeimagerelease_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// The name of the node image
+	Name string `json:"name"`
+	// The URL of the node image
+	Url string `json:"url"`
+	// The name of the cloud to use from the clouds secret
+	CloudName string `json:"cloudName"`
+	// IdentityRef is a reference to a identity to be used when reconciling this cluster
+	IdentityRef *apiv1alpha7.OpenStackIdentityReference `json:"identityRef,omitempty"`
 }
 
 // OpenStackNodeImageReleaseStatus defines the observed state of OpenStackNodeImageRelease.
 type OpenStackNodeImageReleaseStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// +optional
+	// +kubebuilder:default:=false
+	Ready bool `json:"ready,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -19,7 +19,7 @@ package controller
 import (
 	"context"
 
-	infrav1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
+	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,7 +48,7 @@ type OpenStackClusterStackReleaseTemplateReconciler struct {
 func (r *OpenStackClusterStackReleaseTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	openstackclusterstackreleasetemplate := &infrav1alpha1.OpenStackClusterStackReleaseTemplate{}
+	openstackclusterstackreleasetemplate := &apiv1alpha1.OpenStackClusterStackReleaseTemplate{}
 	_ = r.Client.Get(ctx, req.NamespacedName, openstackclusterstackreleasetemplate)
 
 	return ctrl.Result{}, nil
@@ -57,6 +57,6 @@ func (r *OpenStackClusterStackReleaseTemplateReconciler) Reconcile(ctx context.C
 // SetupWithManager sets up the controller with the Manager.
 func (r *OpenStackClusterStackReleaseTemplateReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&infrav1alpha1.OpenStackClusterStackReleaseTemplate{}).
+		For(&apiv1alpha1.OpenStackClusterStackReleaseTemplate{}).
 		Complete(r)
 }
