@@ -36,14 +36,45 @@ spec:
             description: OpenStackNodeImageReleaseSpec defines the desired state of
               OpenStackNodeImageRelease.
             properties:
-              foo:
-                description: Foo is an example field of OpenStackNodeImageRelease.
-                  Edit openstacknodeimagerelease_types.go to remove/update
+              cloudName:
+                description: The name of the cloud to use from the clouds secret
                 type: string
+              identityRef:
+                description: IdentityRef is a reference to a identity to be used when
+                  reconciling this cluster
+                properties:
+                  kind:
+                    description: Kind of the identity. Must be supported by the infrastructure
+                      provider and may be either cluster or namespace-scoped.
+                    minLength: 1
+                    type: string
+                  name:
+                    description: Name of the infrastructure identity to be used. Must
+                      be either a cluster-scoped resource, or namespaced-scoped resource
+                      the same namespace as the resource(s) being provisioned.
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+              name:
+                description: The name of the node image
+                type: string
+              url:
+                description: The URL of the node image
+                type: string
+            required:
+            - cloudName
+            - name
+            - url
             type: object
           status:
             description: OpenStackNodeImageReleaseStatus defines the observed state
               of OpenStackNodeImageRelease.
+            properties:
+              ready:
+                default: false
+                type: boolean
             type: object
         type: object
     served: true

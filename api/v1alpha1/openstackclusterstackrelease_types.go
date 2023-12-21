@@ -18,6 +18,8 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apiv1alpha7 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -25,11 +27,10 @@ import (
 
 // OpenStackClusterStackReleaseSpec defines the desired state of OpenStackClusterStackRelease.
 type OpenStackClusterStackReleaseSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of OpenStackClusterStackRelease. Edit openstackclusterstackrelease_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// The name of the cloud to use from the clouds secret
+	CloudName string `json:"cloudName"`
+	// IdentityRef is a reference to a identity to be used when reconciling this cluster
+	IdentityRef *apiv1alpha7.OpenStackIdentityReference `json:"identityRef,omitempty"`
 }
 
 // OpenStackClusterStackReleaseStatus defines the observed state of OpenStackClusterStackRelease.
