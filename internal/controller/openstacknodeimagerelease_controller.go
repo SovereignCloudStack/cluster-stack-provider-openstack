@@ -153,26 +153,19 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	var (
-		username       string = cloud.AuthInfo.Username
-		authURL        string = cloud.AuthInfo.AuthURL
-		projectID      string = cloud.AuthInfo.ProjectID
-		userDomainName string = cloud.AuthInfo.UserDomainName
-		password       string = cloud.AuthInfo.Password
-	)
 
 	// Authenticate
 	authOpts := gophercloud.AuthOptions{
-		IdentityEndpoint: authURL,
-		Username:         username,
-		Password:         password,
-		DomainName:       userDomainName,
-		TenantID:         projectID,
+		IdentityEndpoint: cloud.AuthInfo.AuthURL,
+		Username:         cloud.AuthInfo.Username,
+		Password:         cloud.AuthInfo.Password,
+		DomainName:       cloud.AuthInfo.UserDomainName,
+		TenantID:         cloud.AuthInfo.ProjectID,
 	}
 
 	provider, err := openstack.AuthenticatedClient(authOpts)
 	if err != nil {
-		fmt.Errorf("Error authenticating with OpenStack: %v", err)
+		return ctrl.Result{}, fmt.Errorf("Error authenticating with OpenStack: %w", err)
 	}
 
 	// Create an Image service client
@@ -182,7 +175,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 
 	imageID, err := findImageByName(imageClient, imageName)
 	if err != nil {
-		fmt.Errorf("Error finding image: %w", err)
+		return ctrl.Result{}, fmt.Errorf("Error finding image: %w", err)
 	} else {
 		if imageID == "" {
 			visibility := images.ImageVisibilityShared
@@ -196,7 +189,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 
 			image, err := createImage(imageClient, createOptsImage)
 			if err != nil {
-				return ctrl.Result{}, err
+				return ctrl.Result{Requeue: true}, err
 			}
 
 			createOpts := imageimport.CreateOpts{
@@ -208,7 +201,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			// Handle error during image import
 			err = importImage(imageClient, image.ID, createOpts)
 			if err != nil {
-				return ctrl.Result{}, err
+				return ctrl.Result{Requeue: true}, err
 			}
 		}
 	}
@@ -216,9 +209,8 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	// Check if image is active
 	imageStatus, err = waitForImageActive(imageClient, imageID, 5*time.Second, 10*time.Minute)
 	if err != nil {
-		fmt.Errorf("Error waiting for image to become active:", err)
-	}
-	if imageStatus {
+		return ctrl.Result{Requeue: true}, fmt.Errorf("Error waiting for image to become active: %w", err)
+	} else if imageStatus {
 		logger.Info("Image is active.")
 	}
 
