@@ -19,18 +19,19 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport"
 )
 
 // OpenStackNodeImageReleaseReconciler reconciles a OpenStackNodeImageRelease object.
@@ -63,24 +64,39 @@ func findImageByName(imagesClient *gophercloud.ServiceClient, imageName string) 
 }
 
 func waitForImageActive(client *gophercloud.ServiceClient, imageID string, interval time.Duration, timeout time.Duration) (bool, error) {
-	startTime := time.Now()
-
-	for {
-		image, err := images.Get(client, imageID).Extract()
-		if err != nil {
-			return false, err
-		}
-
-		if image.Status == "active" {
-			return true, nil
-		}
-
-		if time.Since(startTime) > timeout {
-			return false, fmt.Errorf("Timeout waiting for image to become active")
-		}
-
-		time.Sleep(interval)
+	type result struct {
+		IsAvailable bool
+		Err         error
 	}
+
+	ticker := time.Tick(interval)
+	waiter := time.Tick(timeout)
+
+	resultChannel := make(chan result)
+
+	go func() {
+		for {
+			select {
+			case _ = <-waiter:
+				resultChannel <- result{IsAvailable: false, Err: errors.New("Timeout waiting for image to become active")}
+				return
+			case _ = <-ticker:
+				image, err := images.Get(client, imageID).Extract()
+				if err != nil {
+					resultChannel <- result{IsAvailable: false, Err: err}
+					return
+				}
+
+				if image.Status == "active" {
+					resultChannel <- result{IsAvailable: true, Err: nil}
+					return
+				}
+			}
+		}
+	}()
+
+	resultStruct := <-resultChannel
+	return resultStruct.IsAvailable, resultStruct.Err
 }
 
 func createImage(imageClient *gophercloud.ServiceClient, createOpts images.CreateOpts) (*images.Image, error) {
@@ -170,25 +186,25 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	} else {
 		if imageID == "" {
 			visibility := images.ImageVisibilityShared
-	
+
 			createOptsImage := images.CreateOpts{
 				Name:            imageName,
-				ContainerFormat: "bare",				
+				ContainerFormat: "bare",
 				DiskFormat:      "iso",
-				Visibility: 	 &visibility,
+				Visibility:      &visibility,
 			}
-	
+
 			image, err := createImage(imageClient, createOptsImage)
 			if err != nil {
 				return ctrl.Result{}, err
 			}
-	
+
 			createOpts := imageimport.CreateOpts{
 				Name: imageimport.WebDownloadMethod,
 				URI:  imageURL,
 			}
 			imageID = image.ID
-	
+
 			// Handle error during image import
 			err = importImage(imageClient, image.ID, createOpts)
 			if err != nil {
