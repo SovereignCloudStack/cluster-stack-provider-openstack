@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	apiv1alpha7 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
 )
 
@@ -30,7 +29,7 @@ type OpenStackNodeImageReleaseSpec struct {
 	// The name of the node image
 	Name string `json:"name"`
 	// The URL of the node image
-	Url string `json:"url"`
+	URL string `json:"url"`
 	// The name of the cloud to use from the clouds secret
 	CloudName string `json:"cloudName"`
 	// IdentityRef is a reference to a identity to be used when reconciling this cluster

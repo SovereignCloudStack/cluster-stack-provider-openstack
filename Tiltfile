@@ -185,7 +185,7 @@ def deploy_cspo():
             "cspo-leader-election-rolebinding:rolebinding",
             "cspo-manager-rolebinding:clusterrolebinding",
             #"cspo-serving-cert:certificate",
-            #"cspo-cluster-stack-variables:secret",
+            "cspo-cluster-stack-variables:secret",
             #"cspo-selfsigned-issuer:issuer",
             #"cspo-validating-webhook-configuration:validatingwebhookconfiguration",
         ],

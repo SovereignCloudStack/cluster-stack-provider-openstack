@@ -21,6 +21,7 @@ import (
 	"flag"
 	"os"
 
+	githubclient "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client"
 	infrastructureclusterstackxk8siov1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"github.com/sovereignCloudStack/cluster-stack-provider-openstack/internal/controller"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -47,6 +48,8 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
+var releaseDir string
+
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
@@ -56,6 +59,7 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&releaseDir, "release-dir", "/tmp/downloads/", "Specify release directory for cluster-stack releases")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -87,9 +91,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	gitFactory := githubclient.NewFactory()
+
 	if err = (&controller.OpenStackClusterStackReleaseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:              mgr.GetClient(),
+		Scheme:              mgr.GetScheme(),
+		ReleaseDirectory:    releaseDir,
+		GitHubClientFactory: gitFactory,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OpenStackClusterStackRelease")
 		os.Exit(1)
