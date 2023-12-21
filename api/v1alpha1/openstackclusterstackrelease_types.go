@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	apiv1alpha7 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
 )
 
