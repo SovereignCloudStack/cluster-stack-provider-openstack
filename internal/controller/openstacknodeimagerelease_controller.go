@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"sync"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
@@ -147,74 +148,104 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		cloudName       string = openstacknodeimagerelease.Spec.CloudName
 		imageName       string = openstacknodeimagerelease.Spec.Name
 		imageURL        string = openstacknodeimagerelease.Spec.URL
+		containerFormat string = openstacknodeimagerelease.Spec.ContainerFormat
+		diskFormat      string = openstacknodeimagerelease.Spec.DiskFormat
 	)
 
-	cloud, err := getCloudFromSecret(ctx, r.Client, secretNamespace, secretName, cloudName)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
+	// Create a channel to receive errors from the goroutine
+	resultChan := make(chan error, 1)
+	// Create a wait group to wait for all goroutines to finish
+	var wg sync.WaitGroup
 
-	// Authenticate
-	authOpts := gophercloud.AuthOptions{
-		IdentityEndpoint: cloud.AuthInfo.AuthURL,
-		Username:         cloud.AuthInfo.Username,
-		Password:         cloud.AuthInfo.Password,
-		DomainName:       cloud.AuthInfo.UserDomainName,
-		TenantID:         cloud.AuthInfo.ProjectID,
-	}
+	// Function to do import image concurrently, needs to be modified probably, still testing it
+	downloadImage := func() {
+		defer wg.Done() // Decrement the wait group counter when the goroutine completes
+		cloud, err := getCloudFromSecret(ctx, r.Client, secretNamespace, secretName, cloudName)
+		if err != nil {
+			// Handle error
+			resultChan <- err
+			return
+		}
 
-	provider, err := openstack.AuthenticatedClient(authOpts)
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("Error authenticating with OpenStack: %w", err)
-	}
+		// Authenticate
+		authOpts := gophercloud.AuthOptions{
+			IdentityEndpoint: cloud.AuthInfo.AuthURL,
+			Username:         cloud.AuthInfo.Username,
+			Password:         cloud.AuthInfo.Password,
+			DomainName:       cloud.AuthInfo.UserDomainName,
+			TenantID:         cloud.AuthInfo.ProjectID,
+		}
 
-	// Create an Image service client
-	imageClient, err := openstack.NewImageServiceV2(provider, gophercloud.EndpointOpts{
-		Region: cloud.RegionName,
-	})
+		provider, err := openstack.AuthenticatedClient(authOpts)
+		if err != nil {
+			// Handle error
+			resultChan <- err
+			return
+		}
 
-	imageID, err := findImageByName(imageClient, imageName)
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("Error finding image: %w", err)
-	} else {
-		if imageID == "" {
-			visibility := images.ImageVisibilityShared
+		// Create an Image service client
+		imageClient, err := openstack.NewImageServiceV2(provider, gophercloud.EndpointOpts{
+			Region: cloud.RegionName,
+		})
 
-			createOptsImage := images.CreateOpts{
-				Name:            imageName,
-				ContainerFormat: "bare",
-				DiskFormat:      "iso",
-				Visibility:      &visibility,
+		imageID, err := findImageByName(imageClient, imageName)
+		if err != nil {
+			resultChan <- fmt.Errorf("Error finding image: %w", err)
+			return
+		} else {
+			if imageID == "" {
+				visibility := images.ImageVisibilityShared
+
+				createOptsImage := images.CreateOpts{
+					Name:            imageName,
+					ContainerFormat: containerFormat,
+					DiskFormat:      diskFormat,
+					Visibility:      &visibility,
+				}
+
+				image, err := createImage(imageClient, createOptsImage)
+				if err != nil {
+					// Handle error
+					logger.Error(err, "Failed to find or create image")
+					return
+				}
+
+				createOpts := imageimport.CreateOpts{
+					Name: imageimport.WebDownloadMethod,
+					URI:  imageURL,
+				}
+				imageID = image.ID
+
+				// Handle error during image import
+				err = importImage(imageClient, image.ID, createOpts)
+				if err != nil {
+					// Handle error
+					logger.Error(err, "Failed to import image")
+					return
+				}
 			}
-
-			image, err := createImage(imageClient, createOptsImage)
-			if err != nil {
-				return ctrl.Result{Requeue: true}, err
-			}
-
-			createOpts := imageimport.CreateOpts{
-				Name: imageimport.WebDownloadMethod,
-				URI:  imageURL,
-			}
-			imageID = image.ID
-
-			// Handle error during image import
-			err = importImage(imageClient, image.ID, createOpts)
-			if err != nil {
-				return ctrl.Result{Requeue: true}, err
-			}
+		}
+		// Check if image is active
+		imageStatus, err = waitForImageActive(imageClient, imageID, 5*time.Second, 3*time.Minute)
+		if err != nil {
+			// Handle error
+			logger.Error(err, "Failed to wait for image to become active")
+			return
+		} else if imageStatus {
+			logger.Info("Image is active.")
 		}
 	}
 
-	// Check if image is active
-	imageStatus, err = waitForImageActive(imageClient, imageID, 5*time.Second, 10*time.Minute)
-	if err != nil {
-		return ctrl.Result{Requeue: true}, fmt.Errorf("Error waiting for image to become active: %w", err)
-	} else if imageStatus {
-		logger.Info("Image is active.")
+	// Launch multiple goroutines to download images concurrently
+	for i := 0; i < 1; i++ { // Adjust the number based on desired concurrency, needs to be test it :)
+		wg.Add(1)
+		go downloadImage()
 	}
 
-	return ctrl.Result{}, nil
+	// Wait for all goroutines to finish
+	wg.Wait()
+
+	return ctrl.Result{Requeue: true, RequeueAfter: 2 * time.Minute}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
