@@ -21,14 +21,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 	"sync"
+	"time"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,29 +43,29 @@ type OpenStackNodeImageReleaseReconciler struct {
 }
 
 func findImageByName(imagesClient *gophercloud.ServiceClient, imageName string) (string, error) {
-	var imageID string
-
 	listOpts := images.ListOpts{
 		Name: imageName,
 	}
 
 	allPages, err := images.List(imagesClient, listOpts).AllPages()
+	if err != nil {
+		return "", fmt.Errorf("failed to list images with name %s: %w", imageName, err)
+	}
+
 	imageList, err := images.ExtractImages(allPages)
-	for _, image := range imageList {
-		if image.Name == imageName {
-			imageID = image.ID
-			break
+	if err != nil {
+		return "", fmt.Errorf("failed to extract images with name %s: %w", imageName, err)
+	}
+
+	for i := range imageList {
+		if imageList[i].Name == imageName {
+			return imageList[i].ID, nil
 		}
 	}
-
-	if err != nil {
-		return "", err
-	}
-
-	return imageID, nil
+	return "", fmt.Errorf("failed to find image with name %s: %w", imageName, err)
 }
 
-func waitForImageActive(client *gophercloud.ServiceClient, imageID string, interval time.Duration, timeout time.Duration) (bool, error) {
+func waitForImageActive(serviceClient *gophercloud.ServiceClient, imageID string, interval, timeout time.Duration) (bool, error) {
 	type result struct {
 		IsAvailable bool
 		Err         error
@@ -79,10 +80,10 @@ func waitForImageActive(client *gophercloud.ServiceClient, imageID string, inter
 		for {
 			select {
 			case _ = <-waiter:
-				resultChannel <- result{IsAvailable: false, Err: errors.New("Timeout waiting for image to become active")}
+				resultChannel <- result{IsAvailable: false, Err: errors.New("timeout waiting for image to become active")}
 				return
 			case _ = <-ticker:
-				image, err := images.Get(client, imageID).Extract()
+				image, err := images.Get(serviceClient, imageID).Extract()
 				if err != nil {
 					resultChannel <- result{IsAvailable: false, Err: err}
 					return
@@ -103,7 +104,7 @@ func waitForImageActive(client *gophercloud.ServiceClient, imageID string, inter
 func createImage(imageClient *gophercloud.ServiceClient, createOpts images.CreateOpts) (*images.Image, error) {
 	image, err := images.Create(imageClient, createOpts).Extract()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create image with name %s: %w", createOpts.Name, err)
 	}
 
 	return image, nil
@@ -112,7 +113,7 @@ func createImage(imageClient *gophercloud.ServiceClient, createOpts images.Creat
 func importImage(imageClient *gophercloud.ServiceClient, imageID string, createOpts imageimport.CreateOpts) error {
 	err := imageimport.Create(imageClient, imageID, createOpts).ExtractErr()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to import image with ID %s: %w", imageID, err)
 	}
 
 	return nil
@@ -138,19 +139,19 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	openstacknodeimagerelease := apiv1alpha1.OpenStackNodeImageRelease{}
 	err := r.Client.Get(ctx, req.NamespacedName, &openstacknodeimagerelease)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("Failed to get OpenStackNodeImageRelease %s/%s: %w", req.Namespace, req.Name, err)
+		if apierrors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, fmt.Errorf("failed to get OpenStackNodeImageRelease %s/%s: %w", req.Namespace, req.Name, err)
 	}
-
-	var (
-		imageStatus     bool   = false
-		secretName      string = openstacknodeimagerelease.Spec.IdentityRef.Name
-		secretNamespace string = "default"
-		cloudName       string = openstacknodeimagerelease.Spec.CloudName
-		imageName       string = openstacknodeimagerelease.Spec.Name
-		imageURL        string = openstacknodeimagerelease.Spec.URL
-		containerFormat string = openstacknodeimagerelease.Spec.ContainerFormat
-		diskFormat      string = openstacknodeimagerelease.Spec.DiskFormat
-	)
+	imageStatus := false
+	secretName := openstacknodeimagerelease.Spec.IdentityRef.Name
+	secretNamespace := "default"
+	cloudName := openstacknodeimagerelease.Spec.CloudName
+	imageName := openstacknodeimagerelease.Spec.Name
+	imageURL := openstacknodeimagerelease.Spec.URL
+	containerFormat := openstacknodeimagerelease.Spec.ContainerFormat
+	diskFormat := openstacknodeimagerelease.Spec.DiskFormat
 
 	// Create a channel to receive errors from the goroutine
 	resultChan := make(chan error, 1)
@@ -162,8 +163,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		defer wg.Done() // Decrement the wait group counter when the goroutine completes
 		cloud, err := getCloudFromSecret(ctx, r.Client, secretNamespace, secretName, cloudName)
 		if err != nil {
-			// Handle error
-			resultChan <- err
+			resultChan <- fmt.Errorf("failed to get cloud from secret: %w", err)
 			return
 		}
 
@@ -178,8 +178,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 
 		provider, err := openstack.AuthenticatedClient(authOpts)
 		if err != nil {
-			// Handle error
-			resultChan <- err
+			resultChan <- fmt.Errorf("failed to create an athenticate client: %w", err)
 			return
 		}
 
@@ -187,52 +186,55 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		imageClient, err := openstack.NewImageServiceV2(provider, gophercloud.EndpointOpts{
 			Region: cloud.RegionName,
 		})
+		if err != nil {
+			resultChan <- fmt.Errorf("failed to create an image client: %w", err)
+			return
+		}
 
 		imageID, err := findImageByName(imageClient, imageName)
 		if err != nil {
-			resultChan <- fmt.Errorf("Error finding image: %w", err)
+			resultChan <- err
 			return
-		} else {
-			if imageID == "" {
-				visibility := images.ImageVisibilityShared
+		}
 
-				createOptsImage := images.CreateOpts{
-					Name:            imageName,
-					ContainerFormat: containerFormat,
-					DiskFormat:      diskFormat,
-					Visibility:      &visibility,
-				}
+		if imageID == "" {
+			visibility := images.ImageVisibilityShared
 
-				image, err := createImage(imageClient, createOptsImage)
-				if err != nil {
-					// Handle error
-					logger.Error(err, "Failed to find or create image")
-					return
-				}
+			createOptsImage := images.CreateOpts{
+				Name:            imageName,
+				ContainerFormat: containerFormat,
+				DiskFormat:      diskFormat,
+				Visibility:      &visibility,
+			}
 
-				createOpts := imageimport.CreateOpts{
-					Name: imageimport.WebDownloadMethod,
-					URI:  imageURL,
-				}
-				imageID = image.ID
+			image, err := createImage(imageClient, createOptsImage)
+			if err != nil {
+				resultChan <- err
+				return
+			}
 
-				// Handle error during image import
-				err = importImage(imageClient, image.ID, createOpts)
-				if err != nil {
-					// Handle error
-					logger.Error(err, "Failed to import image")
-					return
-				}
+			createOpts := imageimport.CreateOpts{
+				Name: imageimport.WebDownloadMethod,
+				URI:  imageURL,
+			}
+			imageID = image.ID
+
+			// Handle error during image import
+			err = importImage(imageClient, image.ID, createOpts)
+			if err != nil {
+				resultChan <- err
+				return
 			}
 		}
 		// Check if image is active
 		imageStatus, err = waitForImageActive(imageClient, imageID, 5*time.Second, 3*time.Minute)
 		if err != nil {
-			// Handle error
-			logger.Error(err, "Failed to wait for image to become active")
+			resultChan <- fmt.Errorf("failed to wait for an image to become active: %w", err)
 			return
-		} else if imageStatus {
-			logger.Info("Image is active.")
+		}
+
+		if imageStatus {
+			logger.Info("Image with name %s and ID %s is **active**.", imageName, imageID)
 		}
 	}
 
