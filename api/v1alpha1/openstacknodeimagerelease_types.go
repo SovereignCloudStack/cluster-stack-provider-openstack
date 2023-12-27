@@ -30,6 +30,10 @@ type OpenStackNodeImageReleaseSpec struct {
 	Name string `json:"name"`
 	// The URL of the node image
 	URL string `json:"url"`
+	// The DiskFormat of the node image
+	DiskFormat string `json:"diskFormat"`
+	// The ContainerFormat of the node image
+	ContainerFormat string `json:"containerFormat"`
 	// The name of the cloud to use from the clouds secret
 	CloudName string `json:"cloudName"`
 	// IdentityRef is a reference to a identity to be used when reconciling this cluster
@@ -45,6 +49,8 @@ type OpenStackNodeImageReleaseStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of OpenStackNodeImageRelease"
 
 // OpenStackNodeImageRelease is the Schema for the openstacknodeimagereleases API.
 type OpenStackNodeImageRelease struct {

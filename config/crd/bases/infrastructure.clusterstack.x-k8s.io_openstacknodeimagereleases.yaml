@@ -14,7 +14,15 @@ spec:
     singular: openstacknodeimagerelease
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.ready
+      name: Ready
+      type: boolean
+    - description: Time duration since creation of OpenStackNodeImageRelease
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OpenStackNodeImageRelease is the Schema for the openstacknodeimagereleases
@@ -38,6 +46,12 @@ spec:
             properties:
               cloudName:
                 description: The name of the cloud to use from the clouds secret
+                type: string
+              containerFormat:
+                description: The ContainerFormat of the node image
+                type: string
+              diskFormat:
+                description: The DiskFormat of the node image
                 type: string
               identityRef:
                 description: IdentityRef is a reference to a identity to be used when
@@ -65,6 +79,8 @@ spec:
                 type: string
             required:
             - cloudName
+            - containerFormat
+            - diskFormat
             - name
             - url
             type: object
