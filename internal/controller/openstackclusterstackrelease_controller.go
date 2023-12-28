@@ -34,6 +34,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -81,29 +84,62 @@ const (
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
-func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	logger := log.FromContext(ctx)
 
 	openstackclusterstackrelease := &apiv1alpha1.OpenStackClusterStackRelease{}
 	err := r.Client.Get(ctx, req.NamespacedName, openstackclusterstackrelease)
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
 		return ctrl.Result{}, fmt.Errorf("failed to get OpenStackClusterStackRelease %s/%s: %w", req.Namespace, req.Name, err)
 	}
 
+	patchHelper, err := patch.NewHelper(openstackclusterstackrelease, r.Client)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to init patch helper for OpenStackClusterStackRelease: %w", err)
+	}
+
+	defer func() {
+		conditions.SetSummary(openstackclusterstackrelease)
+
+		if err := patchHelper.Patch(ctx, openstackclusterstackrelease); err != nil {
+			reterr = fmt.Errorf("failed to patch OpenStackClusterStackRelease: %w", err)
+		}
+	}()
+
 	gc, err := r.GitHubClientFactory.NewClient(ctx)
 	if err != nil {
+		conditions.MarkFalse(openstackclusterstackrelease,
+			apiv1alpha1.GitAPIAvailableCondition,
+			apiv1alpha1.GitTokenOrEnvVariableNotSetReason,
+			clusterv1beta1.ConditionSeverityError,
+			err.Error(),
+		)
+		record.Warnf(openstackclusterstackrelease, "GitTokenOrEnvVariableNotSet", err.Error())
 		return ctrl.Result{}, fmt.Errorf("failed to create Github client: %w", err)
 	}
+
+	conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.GitAPIAvailableCondition)
 
 	// name of OpenStackClusterStackRelease object is same as the release tag
 	releaseTag := openstackclusterstackrelease.Name
 
 	releaseAssets, download, err := release.New(releaseTag, r.ReleaseDirectory)
 	if err != nil {
+		conditions.MarkFalse(openstackclusterstackrelease,
+			apiv1alpha1.ClusterStackReleaseAssetsReadyCondition,
+			apiv1alpha1.IssueWithReleaseAssetsReason,
+			clusterv1beta1.ConditionSeverityError,
+			err.Error(),
+		)
 		return ctrl.Result{RequeueAfter: 1 * time.Minute}, fmt.Errorf("failed to create release: %w", err)
 	}
 
 	if download {
+		conditions.MarkFalse(openstackclusterstackrelease, apiv1alpha1.ClusterStackReleaseAssetsReadyCondition, apiv1alpha1.ReleaseAssetsNotDownloadedYetReason, clusterv1beta1.ConditionSeverityInfo, "assets not downloaded yet")
+
 		// this is the point where we download the release from github
 		// acquire lock so that only one reconcile loop can download the release
 		r.openStackClusterStackRelDownloadDirectoryMutex.Lock()
@@ -118,9 +154,11 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 		return ctrl.Result{Requeue: true}, nil
 	}
 
+	conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.ClusterStackReleaseAssetsReadyCondition)
+
 	nodeImages, err := getNodeImagesFromLocal(releaseAssets.LocalDownloadPath)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to get node images: %w", err)
+		return ctrl.Result{}, fmt.Errorf("failed to get node images from local: %w", err)
 	}
 	ownerRef := generateOwnerReference(openstackclusterstackrelease)
 
@@ -138,28 +176,31 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 
 	if len(ownedOpenStackNodeImageReleases) == 0 {
 		logger.Info("OpenStackClusterStackRelease **not ready** yet, waiting for OpenStackNodeImageReleases to be created")
+		conditions.MarkFalse(openstackclusterstackrelease,
+			apiv1alpha1.OpenStackNodeImageReleasesReadyCondition,
+			apiv1alpha1.ProcessOngoingReason, clusterv1beta1.ConditionSeverityInfo,
+			"OpenStackNodeImageReleases not ready yet",
+		)
+		openstackclusterstackrelease.Status.Ready = false
 		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 	}
 	for _, openStackNodeImageRelease := range ownedOpenStackNodeImageReleases {
 		if openStackNodeImageRelease.Status.Ready {
 			continue
 		}
-		openstackclusterstackrelease.Status.Ready = false
-		err = r.Status().Update(ctx, openstackclusterstackrelease)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("failed to update OpenStackClusterStackRelease status:  %w", err)
-		}
-
 		logger.Info("OpenStackClusterStackRelease **not ready** yet, waiting for OpenStackNodeImageRelease to be ready", "name:", openStackNodeImageRelease.ObjectMeta.Name, "ready:", openStackNodeImageRelease.Status.Ready)
+		conditions.MarkFalse(openstackclusterstackrelease,
+			apiv1alpha1.OpenStackNodeImageReleasesReadyCondition,
+			apiv1alpha1.ProcessOngoingReason, clusterv1beta1.ConditionSeverityInfo,
+			"OpenStackNodeImageReleases not ready yet",
+		)
+		openstackclusterstackrelease.Status.Ready = false
 		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 	}
 
-	openstackclusterstackrelease.Status.Ready = true
-	err = r.Status().Update(ctx, openstackclusterstackrelease)
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to update OpenStackClusterStackRelease status:  %w", err)
-	}
 	logger.Info("OpenStackClusterStackRelease ready")
+	conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.OpenStackNodeImageReleasesReadyCondition)
+	openstackclusterstackrelease.Status.Ready = true
 
 	return ctrl.Result{}, nil
 }
