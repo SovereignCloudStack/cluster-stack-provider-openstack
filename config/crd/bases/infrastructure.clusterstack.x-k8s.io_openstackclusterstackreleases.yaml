@@ -73,13 +73,14 @@ spec:
                 type: object
             required:
             - cloudName
+            - identityRef
             type: object
           status:
             description: OpenStackClusterStackReleaseStatus defines the observed state
               of OpenStackClusterStackRelease.
             properties:
               conditions:
-                description: Conditions defines current service state of the ClusterAddon.
+                description: Conditions defines current service state of the OpenStackClusterStackRelease.
                 items:
                   description: Condition defines an observation of a Cluster API resource
                     operational state.

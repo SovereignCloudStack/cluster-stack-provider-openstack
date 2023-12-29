@@ -71,6 +71,7 @@ spec:
                         type: object
                     required:
                     - cloudName
+                    - identityRef
                     type: object
                 required:
                 - spec
