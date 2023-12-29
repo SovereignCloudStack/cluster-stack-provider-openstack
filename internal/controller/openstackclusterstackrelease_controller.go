@@ -28,7 +28,6 @@ import (
 	githubclient "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client"
 	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/release"
 	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
-	"gopkg.in/yaml.v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,6 +40,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/yaml"
 )
 
 // OpenStackClusterStackReleaseReconciler reconciles a OpenStackClusterStackRelease object.
@@ -54,15 +54,7 @@ type OpenStackClusterStackReleaseReconciler struct {
 
 // NodeImages is the list of OpenStack images for the given cluster stack release.
 type NodeImages struct {
-	OpenStackImages []OpenStackImage `yaml:"openStackImages"`
-}
-
-// OpenStackImage defines OpenStack image fields required for image upload.
-type OpenStackImage struct {
-	Name            string `yaml:"name"`
-	URL             string `yaml:"url"`
-	DiskFormat      string `yaml:"diskFormat"`
-	ContainerFormat string `yaml:"containerFormat"`
+	OpenStackNodeImages []*apiv1alpha1.OpenStackNodeImage `yaml:"openStackNodeImages"`
 }
 
 const (
@@ -162,9 +154,9 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 	}
 	ownerRef := generateOwnerReference(openstackclusterstackrelease)
 
-	for _, openStackImage := range nodeImages.OpenStackImages {
-		osnirName := ensureMaxNameLength(fmt.Sprintf("%s-%s", openstackclusterstackrelease.Name, openStackImage.Name))
-		if err := r.getOrCreateOpenStackNodeImageRelease(ctx, openstackclusterstackrelease, osnirName, openStackImage, ownerRef); err != nil {
+	for _, openStackNodeImage := range nodeImages.OpenStackNodeImages {
+		osnirName := ensureMaxNameLength(fmt.Sprintf("%s-%s", openstackclusterstackrelease.Name, openStackNodeImage.CreateOpts.Name))
+		if err := r.getOrCreateOpenStackNodeImageRelease(ctx, openstackclusterstackrelease, osnirName, openStackNodeImage, ownerRef); err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to get or create OpenStackNodeImageRelease %s/%s: %w", openstackclusterstackrelease.Namespace, osnirName, err)
 		}
 	}
@@ -175,7 +167,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 	}
 
 	if len(ownedOpenStackNodeImageReleases) == 0 {
-		logger.Info("OpenStackClusterStackRelease **not ready** yet, waiting for OpenStackNodeImageReleases to be created")
+		logger.Info("OpenStackClusterStackRelease **not ready** yet - waiting for OpenStackNodeImageReleases to be created")
 		conditions.MarkFalse(openstackclusterstackrelease,
 			apiv1alpha1.OpenStackNodeImageReleasesReadyCondition,
 			apiv1alpha1.ProcessOngoingReason, clusterv1beta1.ConditionSeverityInfo,
@@ -188,7 +180,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 		if openStackNodeImageRelease.Status.Ready {
 			continue
 		}
-		logger.Info("OpenStackClusterStackRelease **not ready** yet, waiting for OpenStackNodeImageRelease to be ready", "name:", openStackNodeImageRelease.ObjectMeta.Name, "ready:", openStackNodeImageRelease.Status.Ready)
+		logger.Info("OpenStackClusterStackRelease **not ready** yet - waiting for OpenStackNodeImageRelease to be ready", "name:", openStackNodeImageRelease.ObjectMeta.Name, "ready:", openStackNodeImageRelease.Status.Ready)
 		conditions.MarkFalse(openstackclusterstackrelease,
 			apiv1alpha1.OpenStackNodeImageReleasesReadyCondition,
 			apiv1alpha1.ProcessOngoingReason, clusterv1beta1.ConditionSeverityInfo,
@@ -198,14 +190,14 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 	}
 
-	logger.Info("OpenStackClusterStackRelease ready")
+	logger.Info("OpenStackClusterStackRelease **ready**")
 	conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.OpenStackNodeImageReleasesReadyCondition)
 	openstackclusterstackrelease.Status.Ready = true
 
 	return ctrl.Result{}, nil
 }
 
-func (r *OpenStackClusterStackReleaseReconciler) getOrCreateOpenStackNodeImageRelease(ctx context.Context, openstackclusterstackrelease *apiv1alpha1.OpenStackClusterStackRelease, osnirName string, openStackImage OpenStackImage, ownerRef *metav1.OwnerReference) error {
+func (r *OpenStackClusterStackReleaseReconciler) getOrCreateOpenStackNodeImageRelease(ctx context.Context, openstackclusterstackrelease *apiv1alpha1.OpenStackClusterStackRelease, osnirName string, openStackNodeImage *apiv1alpha1.OpenStackNodeImage, ownerRef *metav1.OwnerReference) error {
 	openStackNodeImageRelease := &apiv1alpha1.OpenStackNodeImageRelease{}
 
 	err := r.Get(ctx, types.NamespacedName{Name: osnirName, Namespace: openstackclusterstackrelease.Namespace}, openStackNodeImageRelease)
@@ -228,10 +220,7 @@ func (r *OpenStackClusterStackReleaseReconciler) getOrCreateOpenStackNodeImageRe
 		APIVersion: "infrastructure.clusterstack.x-k8s.io/v1alpha1",
 	}
 	openStackNodeImageRelease.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
-	openStackNodeImageRelease.Spec.Name = openStackImage.Name
-	openStackNodeImageRelease.Spec.URL = openStackImage.URL
-	openStackNodeImageRelease.Spec.DiskFormat = openStackImage.DiskFormat
-	openStackNodeImageRelease.Spec.ContainerFormat = openStackImage.ContainerFormat
+	openStackNodeImageRelease.Spec.Image = openStackNodeImage
 	openStackNodeImageRelease.Spec.CloudName = openstackclusterstackrelease.Spec.CloudName
 	openStackNodeImageRelease.Spec.IdentityRef = openstackclusterstackrelease.Spec.IdentityRef
 
@@ -326,6 +315,7 @@ func getNodeImagesFromLocal(localDownloadPath string) (*NodeImages, error) {
 }
 
 // TODO: Ensure RFC 1123 compatibility.
+// RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*').
 func ensureMaxNameLength(base string) string {
 	if len(base) > maxNameLength {
 		return base[:maxNameLength]
