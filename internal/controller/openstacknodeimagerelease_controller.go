@@ -143,7 +143,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition, apiv1alpha1.OpenStackImageNotCreatedYetReason, clusterv1beta1.ConditionSeverityInfo, "image is not created yet")
 		openstacknodeimagerelease.Status.Ready = false
 
-		imageCreateOpts := (*images.CreateOpts)(openstacknodeimagerelease.Spec.Image.CreateOpts)
+		imageCreateOpts := openstacknodeimagerelease.Spec.Image.CreateOpts
 		imageCreated, err := createImage(imageClient, imageCreateOpts)
 		if err != nil {
 			conditions.MarkFalse(openstacknodeimagerelease,
