@@ -188,7 +188,21 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		return ctrl.Result{}, fmt.Errorf("failed to get an image: %w", err)
 	}
 
-	// TODO: Add timeout logic - import start time could be taken from OpenStackImageNotImportedYetReason condition, or somehow better
+	// Calculate elapsed time since last transition
+	startTime := conditions.GetLastTransitionTime(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition)
+	elapsedTime := time.Since(startTime.Time)
+
+	// Check if the image has been active after 10 minutes
+	if image.Status != images.ImageStatusActive && elapsedTime > 10*time.Minute {
+		err = fmt.Errorf("Timeout waiting for image: %s to become active", image.Name)
+		conditions.MarkFalse(openstacknodeimagerelease,
+			apiv1alpha1.OpenStackImageReadyCondition,
+			apiv1alpha1.IssueWithOpenStackImageReason,
+			clusterv1beta1.ConditionSeverityError,
+			err.Error(),
+		)
+		return ctrl.Result{}, nil
+	}
 
 	// Manage image statuses according to the guidelines outlined in https://docs.openstack.org/glance/stein/user/statuses.html.
 	switch image.Status {
