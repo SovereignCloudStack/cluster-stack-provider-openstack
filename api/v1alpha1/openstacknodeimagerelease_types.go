@@ -44,38 +44,7 @@ type OpenStackNodeImage struct {
 }
 
 // CreateOpts represents options used to create an image.
-// CreateOpts attributes are taken from github.com/gophercloud/gophercloud/openstack/imageservice/v2/images.
-// Consider.
-type CreateOpts struct {
-	// Name is the name of the new image.
-	Name string `json:"name" yaml:"name" required:"true"`
-	// Id is the the image ID.
-	ID string `json:"id,omitempty" yaml:"id,omitempty"`
-	// Visibility defines who can see/use the image.
-	Visibility *images.ImageVisibility `json:"visibility,omitempty" yaml:"visibility,omitempty"`
-	// Hidden is whether the image is listed in default image list or not.
-	Hidden *bool `json:"os_hidden,omitempty" yaml:"os_hidden,omitempty"` //nolint:tagliatelle // OS API expects snake case query attrs
-	// Tags is a set of image tags.
-	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
-	// ContainerFormat is the format of the
-	// container. Valid values are ami, ari, aki, bare, and ovf.
-	ContainerFormat string `json:"container_format,omitempty" yaml:"container_format,omitempty"` //nolint:tagliatelle // OS API expects snake case query attrs
-	// DiskFormat is the format of the disk. If set,
-	// valid values are ami, ari, aki, vhd, vmdk, raw, qcow2, vdi,
-	// and iso.
-	DiskFormat string `json:"disk_format,omitempty" yaml:"disk_format,omitempty"` //nolint:tagliatelle // OS API expects snake case query attrs
-	// MinDisk is the amount of disk space in
-	// GB that is required to boot the image.
-	MinDisk int `json:"min_disk,omitempty" yaml:"min_disk,omitempty"` //nolint:tagliatelle // OS API expects snake case query attrs
-	// MinRAM is the amount of RAM in MB that
-	// is required to boot the image.
-	MinRAM int `json:"min_ram,omitempty" yaml:"min_ram,omitempty"` //nolint:tagliatelle // OS API expects snake case query attrs
-	// protected is whether the image is not deletable.
-	Protected *bool `json:"protected,omitempty" yaml:"protected,omitempty"`
-	// properties is a set of properties, if any, that
-	// are associated with the image.
-	Properties map[string]string `json:"-" yaml:"-"`
-}
+type CreateOpts images.CreateOpts
 
 // OpenStackNodeImageReleaseStatus defines the observed state of OpenStackNodeImageRelease.
 type OpenStackNodeImageReleaseStatus struct {
