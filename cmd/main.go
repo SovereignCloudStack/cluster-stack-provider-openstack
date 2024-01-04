@@ -48,7 +48,10 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
-var releaseDir string
+var (
+	releaseDir                      string
+	waitForImageBecomeActiveMinutes int
+)
 
 func main() {
 	var metricsAddr string
@@ -60,6 +63,7 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&releaseDir, "release-dir", "/tmp/downloads/", "Specify release directory for cluster-stack releases")
+	flag.IntVar(&waitForImageBecomeActiveMinutes, "import-timeout", 0, "Maximum time in minutes that you allow cspo to import image. If import-timeout <= 0, cspo waits forever.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -103,8 +107,9 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controller.OpenStackNodeImageReleaseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:                          mgr.GetClient(),
+		Scheme:                          mgr.GetScheme(),
+		WaitForImageBecomeActiveMinutes: waitForImageBecomeActiveMinutes,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OpenStackNodeImageRelease")
 		os.Exit(1)

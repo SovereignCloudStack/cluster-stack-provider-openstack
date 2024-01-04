@@ -45,7 +45,8 @@ import (
 // OpenStackNodeImageReleaseReconciler reconciles a OpenStackNodeImageRelease object.
 type OpenStackNodeImageReleaseReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme                          *runtime.Scheme
+	WaitForImageBecomeActiveMinutes int
 }
 
 const (
@@ -143,6 +144,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 
 	if imageID == "" {
 		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition, apiv1alpha1.OpenStackImageNotCreatedYetReason, clusterv1beta1.ConditionSeverityInfo, "image is not created yet")
+		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartCondition, apiv1alpha1.OpenStackImageImportNotStartReason, clusterv1beta1.ConditionSeverityInfo, "image import not start yet")
 		openstacknodeimagerelease.Status.Ready = false
 
 		imageCreateOpts := (*images.CreateOpts)(openstacknodeimagerelease.Spec.Image.CreateOpts)
@@ -172,6 +174,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			return ctrl.Result{}, fmt.Errorf("failed to import an image: %w", err)
 		}
 
+		conditions.MarkTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartCondition)
 		// requeue to make sure that image ID can be find by image name
 		return ctrl.Result{Requeue: true}, nil
 	}
@@ -188,7 +191,27 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		return ctrl.Result{}, fmt.Errorf("failed to get an image: %w", err)
 	}
 
-	// TODO: Add timeout logic - import start time could be taken from OpenStackImageNotImportedYetReason condition, or somehow better
+	// Check wait for image ACTIVE status duration
+	if r.WaitForImageBecomeActiveMinutes > 0 && conditions.IsTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartCondition) {
+		// Calculate elapsed time since the OpenStackImageImportStartCondition is true
+		startTime := conditions.GetLastTransitionTime(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartCondition)
+		elapsedTime := time.Since(startTime.Time)
+
+		waitForImageBecomeActiveTimeout := time.Duration(r.WaitForImageBecomeActiveMinutes) * time.Minute
+
+		// Check if the image has been active after waitForImageBecomeActiveTimeout minutes
+		if image.Status != images.ImageStatusActive && elapsedTime > waitForImageBecomeActiveTimeout {
+			err = fmt.Errorf("timeout - wait for the image %s to transition to the ACTIVE status exceeds the timeout duration %d minutes", image.Name, r.WaitForImageBecomeActiveMinutes)
+			conditions.MarkFalse(openstacknodeimagerelease,
+				apiv1alpha1.OpenStackImageReadyCondition,
+				apiv1alpha1.OpenStackImageImportTimeOutReason,
+				clusterv1beta1.ConditionSeverityError,
+				err.Error(),
+			)
+			// Image import timeout - nothing to do
+			return ctrl.Result{}, nil
+		}
+	}
 
 	// Manage image statuses according to the guidelines outlined in https://docs.openstack.org/glance/stein/user/statuses.html.
 	switch image.Status {

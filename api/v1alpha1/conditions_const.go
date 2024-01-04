@@ -64,7 +64,15 @@ const (
 )
 
 const (
-	// OpenStackImageReadyCondition reports on whether the image of cluster stack release is imported and actice.
+	// OpenStackImageImportStartCondition reports the image import start.
+	OpenStackImageImportStartCondition = "OpenStackImageImportStart"
+
+	// OpenStackImageImportNotStartReason is used when image import does not start yet.
+	OpenStackImageImportNotStartReason = "OpenStackImageImportNotStartReason"
+)
+
+const (
+	// OpenStackImageReadyCondition reports on whether the image of cluster stack release is imported and active.
 	OpenStackImageReadyCondition clusterv1beta1.ConditionType = "OpenStackImageActive"
 
 	// OpenStackImageNotCreatedYetReason is used when image is not yet created.
@@ -72,6 +80,9 @@ const (
 
 	// OpenStackImageNotImportedYetReason is used when image is not yet imported.
 	OpenStackImageNotImportedYetReason = "OpenStackImageNotImportedYet"
+
+	// OpenStackImageImportTimeOutReason is used when image import timeout.
+	OpenStackImageImportTimeOutReason = "OpenStackImageImportTimeOutReason"
 
 	// IssueWithOpenStackImageReason is used when image has an issue.
 	IssueWithOpenStackImageReason = "IssueWithOpenStackImage"
