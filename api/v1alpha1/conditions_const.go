@@ -75,13 +75,4 @@ const (
 
 	// IssueWithOpenStackImageReason is used when image has an issue.
 	IssueWithOpenStackImageReason = "IssueWithOpenStackImage"
-
-	// OpenStackImageIsDeactivatedReason is used when image is deactivated.
-	OpenStackImageIsDeactivatedReason = "OpenStackImageDeactivated"
-
-	// OpenStackImageIsDeletingReason is used when image is being deleted.
-	OpenStackImageIsDeletingReason = "OpenStackImageGettingDeleted"
-
-	// OpenStackImageIsQueuedReason is used when image is queued.
-	OpenStackImageIsQueuedReason = "OpenStackImageIsQueued"
 )

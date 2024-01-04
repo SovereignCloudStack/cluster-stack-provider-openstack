@@ -58,9 +58,11 @@ type NodeImages struct {
 }
 
 const (
-	metadataFileName   = "metadata.yaml"
-	nodeImagesFileName = "node-images.yaml"
-	maxNameLength      = 63
+	metadataFileName                             = "metadata.yaml"
+	nodeImagesFileName                           = "node-images.yaml"
+	maxNameLength                                = 63
+	waitForOpenStackNodeImageReleasesBecomeReady = 30 * time.Second
+	reconcileOpenStackNodeImageReleases          = 3 * time.Minute
 )
 
 //+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io,resources=openstackclusterstackreleases,verbs=get;list;watch;create;update;patch;delete
@@ -174,7 +176,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 			"OpenStackNodeImageReleases not ready yet",
 		)
 		openstackclusterstackrelease.Status.Ready = false
-		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: waitForOpenStackNodeImageReleasesBecomeReady}, nil
 	}
 	for _, openStackNodeImageRelease := range ownedOpenStackNodeImageReleases {
 		if openStackNodeImageRelease.Status.Ready {
@@ -187,14 +189,15 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 			"OpenStackNodeImageReleases not ready yet",
 		)
 		openstackclusterstackrelease.Status.Ready = false
-		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: waitForOpenStackNodeImageReleasesBecomeReady}, nil
 	}
 
 	logger.Info("OpenStackClusterStackRelease **ready**")
 	conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.OpenStackNodeImageReleasesReadyCondition)
 	openstackclusterstackrelease.Status.Ready = true
 
-	return ctrl.Result{}, nil
+	// Requeue to ensure the OpenStackNodeImageReleases are still ready
+	return ctrl.Result{Requeue: true, RequeueAfter: reconcileOpenStackNodeImageReleases}, nil
 }
 
 func (r *OpenStackClusterStackReleaseReconciler) getOrCreateOpenStackNodeImageRelease(ctx context.Context, openstackclusterstackrelease *apiv1alpha1.OpenStackClusterStackRelease, osnirName string, openStackNodeImage *apiv1alpha1.OpenStackNodeImage, ownerRef *metav1.OwnerReference) error {
