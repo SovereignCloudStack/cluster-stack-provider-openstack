@@ -179,6 +179,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 		return ctrl.Result{RequeueAfter: waitForOpenStackNodeImageReleasesBecomeReady}, nil
 	}
 	for _, openStackNodeImageRelease := range ownedOpenStackNodeImageReleases {
+		// TODO: Handle case when `import-timeout > 0`. Then the oscsr_controller should stop the reconciliation
 		if openStackNodeImageRelease.Status.Ready {
 			continue
 		}
