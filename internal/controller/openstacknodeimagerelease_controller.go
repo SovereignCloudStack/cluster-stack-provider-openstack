@@ -147,7 +147,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartCondition, apiv1alpha1.OpenStackImageImportNotStartReason, clusterv1beta1.ConditionSeverityInfo, "image import not start yet")
 		openstacknodeimagerelease.Status.Ready = false
 
-		imageCreateOpts := (*images.CreateOpts)(openstacknodeimagerelease.Spec.Image.CreateOpts)
+		imageCreateOpts := openstacknodeimagerelease.Spec.Image.CreateOpts
 		imageCreated, err := createImage(imageClient, imageCreateOpts)
 		if err != nil {
 			conditions.MarkFalse(openstacknodeimagerelease,
@@ -315,8 +315,8 @@ func findImageByName(imagesClient *gophercloud.ServiceClient, imageName string) 
 	return "", nil
 }
 
-func createImage(imageClient *gophercloud.ServiceClient, createOpts *images.CreateOpts) (*images.Image, error) {
-	image, err := images.Create(imageClient, createOpts).Extract()
+func createImage(imageClient *gophercloud.ServiceClient, createOpts *apiv1alpha1.CreateOpts) (*images.Image, error) {
+	image, err := images.Create(imageClient, (*images.CreateOpts)(createOpts)).Extract()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create image with name %s: %w", createOpts.Name, err)
 	}
