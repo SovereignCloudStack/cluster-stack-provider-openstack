@@ -188,7 +188,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 
 	// TODO: Add timeout logic - import start time could be taken from OpenStackImageNotImportedYetReason condition, or somehow better
 
-	switch image.Status { //nolint:exhaustive // TODO: Add handling for all posible cases of `image.Status`
+	switch image.Status { //nolint:exhaustive
 	case images.ImageStatusActive:
 		logger.Info("OpenStackNodeImageRelease **ready** - image is **active**.", "name", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, "ID", imageID)
 		conditions.MarkTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition)
@@ -197,7 +197,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		// requeue after 2 minutes to make sure the presence of the image
 		return ctrl.Result{Requeue: true, RequeueAfter: 2 * time.Minute}, nil
 
-	case images.ImageStatusImporting:
+	case images.ImageStatusImporting, images.ImageStatusSaving:
 
 		logger.Info("OpenStackNodeImageRelease **not ready** yet - image is currently being imported by Glance.", "name", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, "ID", imageID)
 		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition, apiv1alpha1.OpenStackImageNotImportedYetReason, clusterv1beta1.ConditionSeverityInfo, "image not imported yet")
@@ -206,7 +206,45 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		// wait for image - requeue after 30sec
 		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 
-	// TODO: Add handling for all posible cases of `image.Status`
+	case images.ImageStatusDeactivated:
+
+		logger.Info("OpenStackNodeImageRelease **not ready** yet - image is deactivated.", "name", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, "ID", imageID)
+		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition, apiv1alpha1.OpenStackImageIsDeactivatedReason, clusterv1beta1.ConditionSeverityWarning, "image is deactivated")
+		openstacknodeimagerelease.Status.Ready = false
+
+		// TODO: Should we make function to activate deactivated image or just tell user to activate it manually?
+		// wait for image - requeue after 30sec
+		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+
+	case images.ImageStatusKilled:
+
+		logger.Info("OpenStackNodeImageRelease **error** - image is not readable.", "name", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, "ID", imageID)
+		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition, apiv1alpha1.IssueWithOpenStackImageReason, clusterv1beta1.ConditionSeverityError, "image is not readable")
+		openstacknodeimagerelease.Status.Ready = false
+
+		// TODO: Image is broken and needs to be deleted?
+		// wait for image - requeue after 30sec
+		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+
+	case images.ImageStatusPendingDelete, images.ImageStatusDeleted:
+
+		logger.Info("OpenStackNodeImageRelease **deleting** - image is being deleted.", "name", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, "ID", imageID)
+		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition, apiv1alpha1.OpenStackImageIsDeletingReason, clusterv1beta1.ConditionSeverityInfo, "deleting image")
+		openstacknodeimagerelease.Status.Ready = false
+
+		// wait for image - requeue after 30sec
+		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+
+	case images.ImageStatusQueued:
+
+		logger.Info("OpenStackNodeImageRelease **not ready** - image is queued.", "name", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, "ID", imageID)
+		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition, apiv1alpha1.OpenStackImageIsQueuedReason, clusterv1beta1.ConditionSeverityInfo, "image is queued")
+		openstacknodeimagerelease.Status.Ready = false
+
+		// wait for image - requeue after 30sec
+		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+
+	// TODO: Choose what is default case for image.status
 	default:
 		logger.Info("OpenStackNodeImageRelease **handling for image status not defined yet** - requeue", "name", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, "ID", imageID, "status", image.Status)
 
