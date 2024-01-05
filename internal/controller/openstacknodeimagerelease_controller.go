@@ -202,6 +202,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		// Check if the image has been active after waitForImageBecomeActiveTimeout minutes
 		if image.Status != images.ImageStatusActive && elapsedTime > waitForImageBecomeActiveTimeout {
 			err = fmt.Errorf("timeout - wait for the image %s to transition to the ACTIVE status exceeds the timeout duration %d minutes", image.Name, r.WaitForImageBecomeActiveMinutes)
+			logger.Error(err, "Timeout duration exceeded")
 			conditions.MarkFalse(openstacknodeimagerelease,
 				apiv1alpha1.OpenStackImageReadyCondition,
 				apiv1alpha1.OpenStackImageImportTimeOutReason,
