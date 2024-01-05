@@ -11,6 +11,8 @@ spec:
     kind: OpenStackClusterStackRelease
     listKind: OpenStackClusterStackReleaseList
     plural: openstackclusterstackreleases
+    shortNames:
+    - oscsr
     singular: openstackclusterstackrelease
   scope: Namespaced
   versions:
