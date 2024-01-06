@@ -10,7 +10,7 @@ jobs:
     name: Promote Latest tag to cspo Builder Image
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sovereigncloudstack/cspo-builder:0.1.0
+      image: ghcr.io/sovereigncloudstack/cspo-builder:0.1.1
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.github_token }}
