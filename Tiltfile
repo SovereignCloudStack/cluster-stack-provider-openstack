@@ -75,8 +75,7 @@ def deploy_capo():
 
 def prepare_environment():
     local("kubectl create namespace cluster --dry-run=client -o yaml | kubectl apply -f -")
-    # Delete CSO validating webhook
-    local("kubectl delete validatingwebhookconfiguration cso-validating-webhook-configuration")
+
     # if it's already present then don't copy
     # if not os.path.exists('.clusterstack.yaml'):
         # local("cp config/cspo/clusterstack.yaml .clusterstack.yaml")
