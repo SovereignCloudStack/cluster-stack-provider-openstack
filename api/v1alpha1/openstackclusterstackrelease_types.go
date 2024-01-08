@@ -28,8 +28,25 @@ type OpenStackClusterStackReleaseSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of OpenStackClusterStackRelease. Edit openstackclusterstackrelease_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// The name of the cloud to use from the clouds secret
+	CloudName string `json:"cloudName"`
+
+	// IdentityRef is a reference to a identity to be used when reconciling this cluster
+	IdentityRef OpenStackIdentityReference `json:"identityRef,omitempty"`
+}
+
+// OpenStackIdentityReference is a reference to an infrastructure
+// provider identity to be used to provision cluster resources.
+type OpenStackIdentityReference struct {
+	// Kind of the identity. Must be supported by the infrastructure
+	// provider and may be either cluster or namespace-scoped.
+	// +kubebuilder:validation:MinLength=1
+	Kind string `json:"kind"`
+
+	// Name of the infrastructure identity to be used.
+	// Must be either a cluster-scoped resource, or namespaced-scoped
+	// resource the same namespace as the resource(s) being provisioned.
+	Name string `json:"name"`
 }
 
 // OpenStackClusterStackReleaseStatus defines the observed state of OpenStackClusterStackRelease.
