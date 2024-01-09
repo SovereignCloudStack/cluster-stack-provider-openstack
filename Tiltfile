@@ -21,7 +21,7 @@ settings = {
     "preload_images_for_kind": True,
     "kind_cluster_name": "cspo",
     "capi_version": "v1.5.2",
-    "cso_version": "v0.1.0-alpha.1",
+    "cso_version": "v0.1.0-alpha.2",
     "capo_version": "v0.8.0",
     "cert_manager_version": "v1.13.1",
     "kustomize_substitutions": {
@@ -185,7 +185,7 @@ def deploy_cspo():
             "cspo-leader-election-rolebinding:rolebinding",
             "cspo-manager-rolebinding:clusterrolebinding",
             #"cspo-serving-cert:certificate",
-            #"cspo-cluster-stack-variables:secret",
+            "cspo-cluster-stack-variables:secret",
             #"cspo-selfsigned-issuer:issuer",
             #"cspo-validating-webhook-configuration:validatingwebhookconfiguration",
         ],

@@ -41,6 +41,27 @@ spec:
         - /manager
         args:
         - --leader-elect
+        env:
+        - name: GIT_PROVIDER
+          valueFrom:
+            secretKeyRef:
+              name: cspo-cluster-stack-variables
+              key: git-provider
+        - name: GIT_ORG_NAME
+          valueFrom:
+            secretKeyRef:
+              name: cspo-cluster-stack-variables
+              key: git-org-name
+        - name: GIT_REPOSITORY_NAME
+          valueFrom:
+            secretKeyRef:
+              name: cspo-cluster-stack-variables
+              key: git-repo-name
+        - name: GIT_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: cspo-cluster-stack-variables
+              key: git-access-token
         image: controller:latest
         name: manager
         securityContext:

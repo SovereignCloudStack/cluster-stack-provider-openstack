@@ -40,6 +40,7 @@ type OpenStackClusterStackReleaseTemplateStatus struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:resource:shortName=oscsrt
 //+kubebuilder:subresource:status
 
 // OpenStackClusterStackReleaseTemplate is the Schema for the openstackclusterstackreleasetemplates API.
