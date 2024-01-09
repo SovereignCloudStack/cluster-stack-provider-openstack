@@ -77,13 +77,19 @@ def prepare_environment():
     local("kubectl create namespace cluster --dry-run=client -o yaml | kubectl apply -f -")
 
     # if it's already present then don't copy
-    # if not os.path.exists('.clusterstack.yaml'):
-        # local("cp config/cspo/clusterstack.yaml .clusterstack.yaml")
+    if not os.path.exists('.clusterstack.yaml'):
+        local("cp config/cspo/clusterstack.yaml .clusterstack.yaml")
 
-    # k8s_yaml('.clusterstack.yaml')
+    k8s_yaml('.clusterstack.yaml')
 
-    # if not os.path.exists('.cluster.yaml'):
-        # local("cp config/cspo/cluster.yaml .cluster.yaml")
+    if not os.path.exists('.secret.yaml'):
+        local("cp config/cspo/secret.yaml .secret.yaml")
+
+    if not os.path.exists('.cluster.yaml'):
+        local("cp config/cspo/cluster.yaml .cluster.yaml")
+
+    if not os.path.exists('.clusterstacktemplate.yaml'):
+        local("cp config/cspo/clusterstacktemplate.yaml .clusterstacktemplate.yaml")
 
 def patch_args_with_extra_args(namespace, name, extra_args):
     args_str = str(local("kubectl get deployments {} -n {} -o jsonpath='{{.spec.template.spec.containers[0].args}}'".format(name, namespace)))
@@ -193,8 +199,16 @@ def deploy_cspo():
         labels = ["cspo"],
     )
 
-# def clusterstack():
-    # k8s_resource(objects = ["clusterstack:clusterstack"], new_name = "clusterstack", labels = ["CLUSTERSTACK"])
+def create_secret():
+    cmd = "cat .secret.yaml | {} | kubectl apply -f -".format(envsubst_cmd)
+    local_resource('supersecret', cmd, labels=["clouds-yaml-secret"])    
+
+def clusterstack_template():
+    cmd = "cat .clusterstacktemplate.yaml | {} | kubectl apply -f -".format(envsubst_cmd)
+    local_resource('cspotemplate', cmd, labels=["cspo-template"])  
+
+def clusterstack():
+    k8s_resource(objects = ["clusterstack:clusterstack"], new_name = "clusterstack", labels = ["clusterstack"])
 
 def base64_encode(to_encode):
     encode_blob = local("echo '{}' | tr -d '\n' | base64 - | tr -d '\n'".format(to_encode), quiet = True)
@@ -260,6 +274,19 @@ deploy_cspo()
 
 deploy_capo()
 
+clusterstack()
+
 waitforsystem()
 
 prepare_environment()
+
+create_secret()
+
+clusterstack_template()
+
+cmd_button(
+    "create workload cluster",
+    argv=["make", "create-workload-cluster-openstack"],
+    location=location.NAV,
+    icon_name="add_circle",
+)
