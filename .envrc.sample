@@ -10,3 +10,6 @@ export CLUSTER_TOPOLOGY=true
 export EXP_RUNTIME_SDK=true
 export EXP_MACHINE_SET_PREFLIGHT_CHECKS=true
 export CLUSTER_NAME=test-dfkhje
+export SECRET_NAME=supersecret
+export CLOUD_NAME=test
+export ENCODED_CLOUDS_YAML=mybase64encodedcloudsyamlfile

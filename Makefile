@@ -166,7 +166,7 @@ all-tools: $(GOTESTSUM) $(go-cover-treemap) $(go-binsize-treemap) $(KIND) $(PACK
 ##@ Development
 
 env-vars-for-wl-cluster:
-	@./hack/ensure-env-variables.sh GIT_PROVIDER_B64 GIT_ACCESS_TOKEN_B64 GIT_ORG_NAME_B64 GIT_REPOSITORY_NAME_B64 EXP_CLUSTER_RESOURCE_SET CLUSTER_TOPOLOGY CLUSTER_NAME
+	@./hack/ensure-env-variables.sh GIT_PROVIDER_B64 GIT_ACCESS_TOKEN_B64 GIT_ORG_NAME_B64 GIT_REPOSITORY_NAME_B64 EXP_CLUSTER_RESOURCE_SET CLUSTER_TOPOLOGY CLUSTER_NAME SECRET_NAME CLOUD_NAME ENCODED_CLOUDS_YAML
 
 .PHONY: cluster
 cluster: $(CTLPTL) $(KUBECTL) ## Creates kind-dev Cluster 
@@ -568,6 +568,9 @@ builder-image-push: ## Build $(CONTROLLER_SHORT)-builder to a new version. For m
 
 # .PHONY: test
 # test: test-unit test-integration ## Runs all unit and integration tests.
+
+create-workload-cluster-openstack: $(ENVSUBST) $(KUBECTL)
+	cat .cluster.yaml | $(ENVSUBST) - | $(KUBECTL) apply -f -
 
 .PHONY: tilt-up
 tilt-up: env-vars-for-wl-cluster $(ENVSUBST) $(KUBECTL) $(KUSTOMIZE) $(TILT) cluster  ## Start a mgt-cluster & Tilt. Installs the CRDs and deploys the controllers
