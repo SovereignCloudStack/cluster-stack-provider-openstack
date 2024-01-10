@@ -12,7 +12,7 @@ To gain a comprehensive understanding of the entire concept, we recommend famili
 
 # Quickstart Guide
 
-This section guides you through all the necessary steps to create a workload Kubernetes cluster on top of the OpenStack infrastructure. The guide describes a path that utilizes the [clusterctl] CLI tool to manage the lifecycle of a CAPI management cluster and employs [kind] to create a local non-production managemnt cluster.
+This section guides you through all the necessary steps to create a workload Kubernetes cluster on top of the OpenStack infrastructure. The guide describes a path that utilizes the [clusterctl] CLI tool to manage the lifecycle of a CAPI management cluster and employs [kind] to create a local non-production management cluster.
 
 Note that it is a common practice to create a temporary, local [bootstrap cluster](https://cluster-api.sigs.k8s.io/reference/glossary#bootstrap-cluster) which is then used to provision a target [management cluster](https://cluster-api.sigs.k8s.io/reference/glossary#management-cluster) on the selected infrastructure.
 
@@ -149,6 +149,11 @@ kubectl --kubeconfig kubeconfig.yaml get nodes
 
 Refer to the [doc page](./docs/develop.md) to find more information about how to develop this operator.
 
+# API Reference
+
+CSPO currently exposes the following APIs:
+- the CSPO Custom Resource Definitions (CRDs): [documentation](https://doc.crds.dev/github.com/SovereignCloudStack/cluster-stack-provider-openstack)
+- Golang APIs: tbd
 
 <!-- links -->
 [Docker]: https://www.docker.com/
