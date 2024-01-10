@@ -27,7 +27,7 @@ make tilt-up
 You should make sure that everything in the UI looks green. If not, you can trigger the Tilt workflow again. To establish a connection to your OpenStack project, you must supply a secret containing the `clouds.yaml` file.
 
 ```bash
-kubectl create secret generic <my-secret> --from-file=clouds.yaml=path/to/clouds.yaml -n cluster
+kubectl create secret generic <my-secret> --from-file=clouds.yaml=path/to/clouds.yaml
 ```
 
 To transfer the credentials stored in the secret mentioned above to the operator, the user must create an `OpenStackClusterStackReleaseTemplate` object and specify this secret in the `identityRef` field. The `clouds.yaml` file may contain one or more clouds, so the user must specify desired connection to a specific cloud by using the `cloudName` field. Refer to the `examples/cspotemplate.yaml` file for more details. Afterward, apply this template to the local Kind cluster, which was built by the previous `make` command.
