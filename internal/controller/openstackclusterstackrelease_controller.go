@@ -218,10 +218,19 @@ func (r *OpenStackClusterStackReleaseReconciler) getOrCreateOpenStackNodeImageRe
 
 	err := r.Get(ctx, types.NamespacedName{Name: osnirName, Namespace: openstackclusterstackrelease.Namespace}, openStackNodeImageRelease)
 
-	// Nothing to do if the object exists
+	// Update owner references if the object exists
 	if err == nil {
 		// Ensure owner reference
 		openStackNodeImageRelease.SetOwnerReferences(util.EnsureOwnerRef(openStackNodeImageRelease.GetOwnerReferences(), *ownerRef))
+
+		if err := r.Update(ctx, openStackNodeImageRelease); err != nil {
+			record.Eventf(openStackNodeImageRelease,
+				"ErrorOpenStackNodeImageRelease",
+				"failed to update %s OpenStackNodeImageRelease: %s", osnirName, err.Error(),
+			)
+			return fmt.Errorf("failed to update OpenStackNodeImageRelease: %w", err)
+		}
+
 		return nil
 	}
 
@@ -235,7 +244,7 @@ func (r *OpenStackClusterStackReleaseReconciler) getOrCreateOpenStackNodeImageRe
 	openStackNodeImageRelease.Namespace = openstackclusterstackrelease.Namespace
 	openStackNodeImageRelease.TypeMeta = metav1.TypeMeta{
 		Kind:       "OpenStackNodeImageRelease",
-		APIVersion: "infrastructure.clusterstack.x-k8s.io/v1alpha1",
+		APIVersion: apiv1alpha1.GroupVersion.String(),
 	}
 	openStackNodeImageRelease.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 	openStackNodeImageRelease.Spec.Image = openStackNodeImage
@@ -268,7 +277,7 @@ func (r *OpenStackClusterStackReleaseReconciler) getOwnedOpenStackNodeImageRelea
 		for i := range osnir.GetOwnerReferences() {
 			ownerRef := osnir.GetOwnerReferences()[i]
 			if matchOwnerReference(&ownerRef, openstackclusterstackrelease) {
-				ownedOpenStackNodeImageReleases = append(ownedOpenStackNodeImageReleases, &osnirList.Items[i])
+				ownedOpenStackNodeImageReleases = append(ownedOpenStackNodeImageReleases, &osnir)
 				break
 			}
 		}
