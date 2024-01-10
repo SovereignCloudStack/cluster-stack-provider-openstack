@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -34,6 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/record"
@@ -60,7 +62,6 @@ type NodeImages struct {
 const (
 	metadataFileName                             = "metadata.yaml"
 	nodeImagesFileName                           = "node-images.yaml"
-	maxNameLength                                = 63
 	waitForOpenStackNodeImageReleasesBecomeReady = 30 * time.Second
 	reconcileOpenStackNodeImageReleases          = 3 * time.Minute
 )
@@ -157,7 +158,18 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 	ownerRef := generateOwnerReference(openstackclusterstackrelease)
 
 	for _, openStackNodeImage := range nodeImages.OpenStackNodeImages {
-		osnirName := ensureMaxNameLength(fmt.Sprintf("%s-%s", openstackclusterstackrelease.Name, openStackNodeImage.CreateOpts.Name))
+		// OpenStackNodeImageRelease is composed as follows:
+		// <release tag without version>-<image name>-<node-image-version>
+		// e.g.: `openstack-ferrol-1-27-ubuntu-capi-image-v1.27.8-v2`
+		// This ensures that multiple versions of one ClusterStack could share images
+		nodeImageVersion := releaseAssets.Meta.Versions.Components.NodeImage
+		nameWithoutVersion, err := cutOpenStackClusterStackReleaseVersionFromReleaseTag(openstackclusterstackrelease.Name)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to cut release tag: %w", err)
+		}
+
+		osnirName := fmt.Sprintf("%s-%s-%s", nameWithoutVersion, openStackNodeImage.CreateOpts.Name, nodeImageVersion)
+
 		if err := r.getOrCreateOpenStackNodeImageRelease(ctx, openstackclusterstackrelease, osnirName, openStackNodeImage, ownerRef); err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to get or create OpenStackNodeImageRelease %s/%s: %w", openstackclusterstackrelease.Namespace, osnirName, err)
 		}
@@ -206,8 +218,19 @@ func (r *OpenStackClusterStackReleaseReconciler) getOrCreateOpenStackNodeImageRe
 
 	err := r.Get(ctx, types.NamespacedName{Name: osnirName, Namespace: openstackclusterstackrelease.Namespace}, openStackNodeImageRelease)
 
-	// Nothing to do if the object exists
+	// Update owner references if the object exists
 	if err == nil {
+		// Ensure owner reference
+		openStackNodeImageRelease.SetOwnerReferences(util.EnsureOwnerRef(openStackNodeImageRelease.GetOwnerReferences(), *ownerRef))
+
+		if err := r.Update(ctx, openStackNodeImageRelease); err != nil {
+			record.Eventf(openStackNodeImageRelease,
+				"ErrorOpenStackNodeImageRelease",
+				"failed to update %s OpenStackNodeImageRelease: %s", osnirName, err.Error(),
+			)
+			return fmt.Errorf("failed to update OpenStackNodeImageRelease: %w", err)
+		}
+
 		return nil
 	}
 
@@ -221,7 +244,7 @@ func (r *OpenStackClusterStackReleaseReconciler) getOrCreateOpenStackNodeImageRe
 	openStackNodeImageRelease.Namespace = openstackclusterstackrelease.Namespace
 	openStackNodeImageRelease.TypeMeta = metav1.TypeMeta{
 		Kind:       "OpenStackNodeImageRelease",
-		APIVersion: "infrastructure.clusterstack.x-k8s.io/v1alpha1",
+		APIVersion: apiv1alpha1.GroupVersion.String(),
 	}
 	openStackNodeImageRelease.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 	openStackNodeImageRelease.Spec.Image = openStackNodeImage
@@ -254,7 +277,7 @@ func (r *OpenStackClusterStackReleaseReconciler) getOwnedOpenStackNodeImageRelea
 		for i := range osnir.GetOwnerReferences() {
 			ownerRef := osnir.GetOwnerReferences()[i]
 			if matchOwnerReference(&ownerRef, openstackclusterstackrelease) {
-				ownedOpenStackNodeImageReleases = append(ownedOpenStackNodeImageReleases, &osnirList.Items[i])
+				ownedOpenStackNodeImageReleases = append(ownedOpenStackNodeImageReleases, &osnir)
 				break
 			}
 		}
@@ -318,13 +341,14 @@ func getNodeImagesFromLocal(localDownloadPath string) (*NodeImages, error) {
 	return &nodeImages, nil
 }
 
-// TODO: Ensure RFC 1123 compatibility.
-// RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*').
-func ensureMaxNameLength(base string) string {
-	if len(base) > maxNameLength {
-		return base[:maxNameLength]
+// cutOpenStackClusterStackReleaseVersionFromReleaseTag returns a release tag without version,
+// e.g.  from `openstack-ferrol-1-27-v2` returns `openstack-ferrol-1-27`.
+func cutOpenStackClusterStackReleaseVersionFromReleaseTag(releaseTag string) (string, error) {
+	v := strings.Split(releaseTag, "-")
+	if len(v) != 5 && len(v) != 6 {
+		return "", fmt.Errorf("invalid release tag %s", releaseTag)
 	}
-	return base
+	return fmt.Sprintf("%s-%s-%s-%s", v[0], v[1], v[2], v[3]), nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
