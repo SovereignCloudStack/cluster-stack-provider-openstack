@@ -149,6 +149,11 @@ kubectl --kubeconfig kubeconfig.yaml get nodes
 
 Refer to the [doc page](./docs/develop.md) to find more information about how to develop this operator.
 
+# API Reference
+
+CSPO currently exposes the following APIs:
+- the CSPO Custom Resource Definitions (CRDs): [documentation](https://doc.crds.dev/github.com/SovereignCloudStack/cluster-stack-provider-openstack)
+- Golang APIs: tbd
 
 <!-- links -->
 [Docker]: https://www.docker.com/
