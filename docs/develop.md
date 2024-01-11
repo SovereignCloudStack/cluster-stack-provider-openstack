@@ -14,7 +14,7 @@ Next, configure your environment variables. Once that's done, you can initiate d
 
 ## Developing with Tilt
 
-![tilt](./pics/tilt.png "Tilt")
+![tilt](./images/tilt.png "Tilt")
 
 Operator development requires a lot of iteration, and the “build, tag, push, update deployment” workflow can be very tedious. Tilt makes this process much simpler by watching for updates and automatically building and deploying them. To build a kind cluster and to start Tilt, run:
 
