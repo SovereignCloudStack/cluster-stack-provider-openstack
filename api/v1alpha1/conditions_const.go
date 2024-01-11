@@ -22,7 +22,7 @@ import (
 
 const (
 	// ClusterStackReleaseAssetsReadyCondition reports on whether the download of cluster stack release assets is complete.
-	ClusterStackReleaseAssetsReadyCondition clusterv1beta1.ConditionType = "ClusterStackReleaseDownloaded"
+	ClusterStackReleaseAssetsReadyCondition clusterv1beta1.ConditionType = "ClusterStackReleaseAssetsReady"
 
 	// ReleaseAssetsNotDownloadedYetReason is used when release assets are not yet downloaded.
 	ReleaseAssetsNotDownloadedYetReason = "ReleaseAssetsNotDownloadedYet"
@@ -64,8 +64,8 @@ const (
 )
 
 const (
-	// OpenStackImageImportStartCondition reports the image import start.
-	OpenStackImageImportStartCondition = "OpenStackImageImportStart"
+	// OpenStackImageImportStartedCondition reports the image import starts.
+	OpenStackImageImportStartedCondition = "OpenStackImageImportStarted"
 
 	// OpenStackImageImportNotStartReason is used when image import does not start yet.
 	OpenStackImageImportNotStartReason = "OpenStackImageImportNotStartReason"
