@@ -93,7 +93,7 @@ Get the latest CSPO release version and apply CSPO manifests to the management c
 # Get the latest CSPO release version
 CSPO_VERSION=$(curl https://api.github.com/repos/SovereignCloudStack/cluster-stack-provider-openstack/releases/latest -s | jq .name -r)
 # Apply CSPO manifests
-curl -sSL https://github.com/sovereignCloudStack/cluster-stack-provider-openstack/releases/download/${CSPO_VERSION}/cspo-infrastructure-components.yaml | /tmp/envsubst | kubectl apply -f -
+curl -sSL https://github.com/SovereignCloudStack/cluster-stack-provider-openstack/releases/download/${CSPO_VERSION}/cspo-infrastructure-components.yaml | /tmp/envsubst | kubectl apply -f -
 ```
 
 ## Create the workload cluster

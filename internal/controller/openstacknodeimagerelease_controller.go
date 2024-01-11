@@ -144,7 +144,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 
 	if imageID == "" {
 		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition, apiv1alpha1.OpenStackImageNotCreatedYetReason, clusterv1beta1.ConditionSeverityInfo, "image is not created yet")
-		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartCondition, apiv1alpha1.OpenStackImageImportNotStartReason, clusterv1beta1.ConditionSeverityInfo, "image import not start yet")
+		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition, apiv1alpha1.OpenStackImageImportNotStartReason, clusterv1beta1.ConditionSeverityInfo, "image import not start yet")
 		openstacknodeimagerelease.Status.Ready = false
 
 		imageCreateOpts := openstacknodeimagerelease.Spec.Image.CreateOpts
@@ -174,8 +174,8 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			return ctrl.Result{}, fmt.Errorf("failed to import an image: %w", err)
 		}
 
-		conditions.MarkTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartCondition)
-		// requeue to make sure that image ID can be find by image name
+		conditions.MarkTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition)
+		// requeue to make sure that image ID can be found via image name
 		return ctrl.Result{Requeue: true}, nil
 	}
 
@@ -192,9 +192,9 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	}
 
 	// Check wait for image ACTIVE status duration
-	if r.WaitForImageBecomeActiveMinutes > 0 && conditions.IsTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartCondition) {
+	if r.WaitForImageBecomeActiveMinutes > 0 && conditions.IsTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition) {
 		// Calculate elapsed time since the OpenStackImageImportStartCondition is true
-		startTime := conditions.GetLastTransitionTime(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartCondition)
+		startTime := conditions.GetLastTransitionTime(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition)
 		elapsedTime := time.Since(startTime.Time)
 
 		waitForImageBecomeActiveTimeout := time.Duration(r.WaitForImageBecomeActiveMinutes) * time.Minute
