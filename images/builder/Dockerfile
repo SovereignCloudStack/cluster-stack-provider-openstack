@@ -17,9 +17,9 @@
 # If you make changes to this Dockerfile run `make builder-image-push`.
 
 # Install Lychee
-FROM docker.io/library/alpine:3.18.4@sha256:48d9183eb12a05c99bcc0bf44a003607b8e941e1d4f41f9ad12bdcc4b5672f86 as lychee
+FROM docker.io/library/alpine:3.19.0@sha256:13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd as lychee
 # update: datasource=github-tags depName=lycheeverse/lychee versioning=semver
-ENV LYCHEE_VERSION="v0.13.0"
+ENV LYCHEE_VERSION="v0.14.1"
 # hadolint ignore=DL3018
 RUN apk add --no-cache curl && \
     curl -L -o /tmp/lychee-${LYCHEE_VERSION}.tgz https://github.com/lycheeverse/lychee/releases/download/${LYCHEE_VERSION}/lychee-${LYCHEE_VERSION}-x86_64-unknown-linux-gnu.tar.gz && \
@@ -28,7 +28,7 @@ RUN apk add --no-cache curl && \
     rm -rf /tmp/linux-amd64 /tmp/lychee-${LYCHEE_VERSION}.tgz
 
 # Install Golang CI Lint
-FROM docker.io/library/alpine:3.18.4@sha256:48d9183eb12a05c99bcc0bf44a003607b8e941e1d4f41f9ad12bdcc4b5672f86 as golangci
+FROM docker.io/library/alpine:3.19.0@sha256:13b7e62e8df80264dbb747995705a986aa530415763a6c58f84a3ca8af9a5bcd as golangci
 # update: datasource=github-tags depName=golangci/golangci-lint versioning=semver
 ENV GOLANGCI_VERSION="v1.55.2"
 WORKDIR /
@@ -43,17 +43,17 @@ RUN apk add --no-cache curl && \
 FROM docker.io/hadolint/hadolint:v2.12.0-alpine@sha256:7dba9a9f1a0350f6d021fb2f6f88900998a4fb0aaf8e4330aa8c38544f04db42 as hadolint
 
 # Install Trivy
-FROM docker.io/aquasec/trivy:0.47.0@sha256:163b935486680eefe46e38534eaeabd95e36e0e6b7b3fa5d08fb1e05c6ad9f20 as trivy
+FROM docker.io/aquasec/trivy:0.48.3@sha256:52cb80d5bf969252b907a76495908a35c158238de3b1638747ccdffa9c7fe7e3 as trivy
 
 ############################
 # Cspo Build Image Base #
 ############################
-FROM docker.io/library/golang:1.21.3-bullseye@sha256:bea700cb2a4b3df3add033cea317d5e1dd7a59412d1b6fe25ceb257bcfdc6a1d
+FROM docker.io/library/golang:1.21.6-bullseye@sha256:4ff32e92534a75df6b47bce4e5a4678bcd8fbb76805c647e0e855c60f0ce9641
 
 # update: datasource=repology depName=debian_11/skopeo versioning=loose
 ENV SKOPEO_VERSION="1.2.2+dfsg1-1+b6"
 # update: datasource=github-tags depName=adrienverge/yamllint versioning=semver
-ENV YAMLLINT_VERSION="v1.32.0"
+ENV YAMLLINT_VERSION="v1.33.0"
 # update: datasource=github-tags depName=opt-nc/yamlfixer versioning=semver
 ENV YAMLFIXER_VERSION="0.9.15"
 
