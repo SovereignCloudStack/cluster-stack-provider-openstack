@@ -45,14 +45,13 @@ import (
 // OpenStackNodeImageReleaseReconciler reconciles a OpenStackNodeImageRelease object.
 type OpenStackNodeImageReleaseReconciler struct {
 	client.Client
-	Scheme                          *runtime.Scheme
-	WaitForImageBecomeActiveMinutes int
+	Scheme             *runtime.Scheme
+	ImageImportTimeout int
 }
 
 const (
 	cloudsSecretKey          = "clouds.yaml"
 	waitForImageBecomeActive = 30 * time.Second
-	reconcileImage           = 3 * time.Minute
 )
 
 //+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io,resources=openstacknodeimagereleases,verbs=get;list;watch;create;update;patch;delete
@@ -113,7 +112,9 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	opts := &clientconfig.ClientOpts{AuthInfo: cloud.AuthInfo}
 	providerClient, err := clientconfig.AuthenticatedClient(opts)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to create a provider client: %w", err)
+		record.Warnf(openstacknodeimagerelease, "OpenStackProviderClientNotSet", err.Error())
+		logger.Error(err, "failed to create a provider client")
+		return ctrl.Result{}, nil
 	}
 
 	// Create an OpenStack image service client
@@ -126,7 +127,8 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			err.Error(),
 		)
 		record.Warnf(openstacknodeimagerelease, "OpenStackImageServiceClientNotSet", err.Error())
-		return ctrl.Result{}, fmt.Errorf("failed to create an image client: %w", err)
+		logger.Error(err, "failed to create an image client")
+		return ctrl.Result{}, nil
 	}
 
 	conditions.MarkTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageServiceClientAvailableCondition)
@@ -139,7 +141,9 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			clusterv1beta1.ConditionSeverityError,
 			err.Error(),
 		)
-		return ctrl.Result{}, fmt.Errorf("failed to find an image: %w", err)
+		record.Warnf(openstacknodeimagerelease, "OpenStackImageFailedToFind", err.Error())
+		logger.Error(err, "failed to find an image")
+		return ctrl.Result{}, nil
 	}
 
 	if imageID == "" {
@@ -156,7 +160,9 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 				clusterv1beta1.ConditionSeverityError,
 				err.Error(),
 			)
-			return ctrl.Result{}, fmt.Errorf("failed to create an image: %w", err)
+			record.Warnf(openstacknodeimagerelease, "OpenStackImageFailedToCreate", err.Error())
+			logger.Error(err, "failed to create an image")
+			return ctrl.Result{}, nil
 		}
 
 		imageImportOpts := imageimport.CreateOpts{
@@ -171,7 +177,9 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 				clusterv1beta1.ConditionSeverityError,
 				err.Error(),
 			)
-			return ctrl.Result{}, fmt.Errorf("failed to import an image: %w", err)
+			record.Warnf(openstacknodeimagerelease, "OpenStackImageFailedToImport", err.Error())
+			logger.Error(err, "failed to import an image")
+			return ctrl.Result{}, nil
 		}
 
 		conditions.MarkTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition)
@@ -188,27 +196,30 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			clusterv1beta1.ConditionSeverityError,
 			err.Error(),
 		)
-		return ctrl.Result{}, fmt.Errorf("failed to get an image: %w", err)
+		record.Warnf(openstacknodeimagerelease, "OpenStackImageFailedToGet", err.Error())
+		logger.Error(err, "failed to get an image")
+		return ctrl.Result{}, nil
 	}
 
-	// Check wait for image ACTIVE status duration
-	if r.WaitForImageBecomeActiveMinutes > 0 && conditions.IsTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition) {
-		// Calculate elapsed time since the OpenStackImageImportStartedCondition is true
+	// Ensure that the import does not exceed the timeout duration
+	if r.ImageImportTimeout > 0 && conditions.IsTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition) {
+		// Calculate elapsed time since the OpenStackImageImportStartCondition is true
 		startTime := conditions.GetLastTransitionTime(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition)
 		elapsedTime := time.Since(startTime.Time)
 
-		waitForImageBecomeActiveTimeout := time.Duration(r.WaitForImageBecomeActiveMinutes) * time.Minute
+		imageImportTimeout := time.Duration(r.ImageImportTimeout) * time.Minute
 
 		// Check if the image has been active after waitForImageBecomeActiveTimeout minutes
-		if image.Status != images.ImageStatusActive && elapsedTime > waitForImageBecomeActiveTimeout {
-			err = fmt.Errorf("timeout - wait for the image %s to transition to the ACTIVE status exceeds the timeout duration %d minutes", image.Name, r.WaitForImageBecomeActiveMinutes)
-			logger.Error(err, "Timeout duration exceeded")
+		if image.Status != images.ImageStatusActive && elapsedTime > imageImportTimeout {
+			err = fmt.Errorf("timeout - wait for the image %s to transition to the ACTIVE status exceeds the timeout duration %d minutes", image.Name, r.ImageImportTimeout)
 			conditions.MarkFalse(openstacknodeimagerelease,
 				apiv1alpha1.OpenStackImageReadyCondition,
 				apiv1alpha1.OpenStackImageImportTimeOutReason,
 				clusterv1beta1.ConditionSeverityError,
 				err.Error(),
 			)
+			record.Warnf(openstacknodeimagerelease, "OpenStackImageImportTimeout", err.Error())
+			logger.Error(err, "timeout - import duration exceeded")
 			// Image import timeout - nothing to do
 			return ctrl.Result{}, nil
 		}
@@ -233,7 +244,9 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			err.Error(),
 		)
 		openstacknodeimagerelease.Status.Ready = false
-		return ctrl.Result{}, err
+		record.Warnf(openstacknodeimagerelease, "OpenStackImageStatusUnexpected", err.Error())
+		logger.Error(err, "unexpected image status")
+		return ctrl.Result{}, nil
 
 	case images.ImageStatusQueued, images.ImageStatusSaving, images.ImageStatusDeleted, images.ImageStatusPendingDelete, images.ImageStatusImporting:
 		// The other statuses are expected. See the explanation below:
@@ -242,7 +255,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		logger.Info("OpenStackNodeImageRelease **not ready** yet - waiting for image to become ACTIVE", "name", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, "ID", imageID, "status", image.Status)
 		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition, apiv1alpha1.OpenStackImageNotImportedYetReason, clusterv1beta1.ConditionSeverityInfo, "waiting for image to become ACTIVE")
 		openstacknodeimagerelease.Status.Ready = false
-		// Wait for image
+		// Wait for image to become active
 		return ctrl.Result{RequeueAfter: waitForImageBecomeActive}, nil
 
 	default:
@@ -255,11 +268,12 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			err.Error(),
 		)
 		openstacknodeimagerelease.Status.Ready = false
-		return ctrl.Result{}, err
+		record.Warnf(openstacknodeimagerelease, "OpenStackImageStatusUnknown", err.Error())
+		logger.Error(err, "unknown image status")
+		return ctrl.Result{}, nil
 	}
 
-	// Requeue to ensure the image's presence
-	return ctrl.Result{Requeue: true, RequeueAfter: reconcileImage}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Context, secretNamespace, secretName, cloudName string) (clientconfig.Cloud, error) {

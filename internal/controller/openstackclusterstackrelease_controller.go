@@ -63,7 +63,6 @@ const (
 	metadataFileName                             = "metadata.yaml"
 	nodeImagesFileName                           = "node-images.yaml"
 	waitForOpenStackNodeImageReleasesBecomeReady = 30 * time.Second
-	reconcileOpenStackNodeImageReleases          = 3 * time.Minute
 )
 
 //+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io,resources=openstackclusterstackreleases,verbs=get;list;watch;create;update;patch;delete
@@ -113,7 +112,8 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 			err.Error(),
 		)
 		record.Warnf(openstackclusterstackrelease, "GitTokenOrEnvVariableNotSet", err.Error())
-		return ctrl.Result{}, fmt.Errorf("failed to create Github client: %w", err)
+		logger.Error(err, "failed to create Github client")
+		return ctrl.Result{}, nil
 	}
 
 	conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.GitAPIAvailableCondition)
@@ -140,7 +140,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 		r.openStackClusterStackRelDownloadDirectoryMutex.Lock()
 
 		if err := downloadReleaseAssets(ctx, releaseTag, releaseAssets.LocalDownloadPath, gc); err != nil {
-			return ctrl.Result{}, fmt.Errorf("failed to download release assets: %w", err)
+			return ctrl.Result{RequeueAfter: 1 * time.Minute}, fmt.Errorf("failed to download release assets: %w", err)
 		}
 
 		r.openStackClusterStackRelDownloadDirectoryMutex.Unlock()
@@ -170,7 +170,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 
 		osnirName := fmt.Sprintf("%s-%s-%s", nameWithoutVersion, openStackNodeImage.CreateOpts.Name, nodeImageVersion)
 
-		if err := r.getOrCreateOpenStackNodeImageRelease(ctx, openstackclusterstackrelease, osnirName, openStackNodeImage, ownerRef); err != nil {
+		if err := r.createOrUpdateOpenStackNodeImageRelease(ctx, openstackclusterstackrelease, osnirName, openStackNodeImage, ownerRef); err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to get or create OpenStackNodeImageRelease %s/%s: %w", openstackclusterstackrelease.Namespace, osnirName, err)
 		}
 	}
@@ -209,11 +209,10 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 	conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.OpenStackNodeImageReleasesReadyCondition)
 	openstackclusterstackrelease.Status.Ready = true
 
-	// Requeue to ensure the OpenStackNodeImageReleases are still ready
-	return ctrl.Result{Requeue: true, RequeueAfter: reconcileOpenStackNodeImageReleases}, nil
+	return ctrl.Result{}, nil
 }
 
-func (r *OpenStackClusterStackReleaseReconciler) getOrCreateOpenStackNodeImageRelease(ctx context.Context, openstackclusterstackrelease *apiv1alpha1.OpenStackClusterStackRelease, osnirName string, openStackNodeImage *apiv1alpha1.OpenStackNodeImage, ownerRef *metav1.OwnerReference) error {
+func (r *OpenStackClusterStackReleaseReconciler) createOrUpdateOpenStackNodeImageRelease(ctx context.Context, openstackclusterstackrelease *apiv1alpha1.OpenStackClusterStackRelease, osnirName string, openStackNodeImage *apiv1alpha1.OpenStackNodeImage, ownerRef *metav1.OwnerReference) error {
 	openStackNodeImageRelease := &apiv1alpha1.OpenStackNodeImageRelease{}
 
 	err := r.Get(ctx, types.NamespacedName{Name: osnirName, Namespace: openstackclusterstackrelease.Namespace}, openStackNodeImageRelease)
@@ -252,10 +251,7 @@ func (r *OpenStackClusterStackReleaseReconciler) getOrCreateOpenStackNodeImageRe
 	openStackNodeImageRelease.Spec.IdentityRef = openstackclusterstackrelease.Spec.IdentityRef
 
 	if err := r.Create(ctx, openStackNodeImageRelease); err != nil {
-		record.Eventf(openStackNodeImageRelease,
-			"ErrorOpenStackNodeImageRelease",
-			"failed to create %s OpenStackNodeImageRelease: %s", osnirName, err.Error(),
-		)
+		record.Warnf(openStackNodeImageRelease, "ErrorOpenStackNodeImageRelease", err.Error())
 		return fmt.Errorf("failed to create OpenStackNodeImageRelease: %w", err)
 	}
 
