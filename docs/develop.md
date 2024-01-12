@@ -28,7 +28,7 @@ You should make sure that everything in the UI looks green. If not, you can trig
 
 In case you want to change some code, you can do so and see that Tilt triggers on save. It will update the container of the operator automatically.
 
-If you want to change something in your ClusterStack or Cluster custom resources, you can have a look at `.cluster`.yaml and `.clusterstack.yaml`, which Tilt uses.
+If you want to change something in your ClusterStack or Cluster custom resources, you can have a look at `.cluster.yaml` and `.clusterstack.yaml`, which Tilt uses.
 
 To tear down the workload cluster press the "Delete Workload Cluster" button. After a few minutes, the resources should be deleted.
 
