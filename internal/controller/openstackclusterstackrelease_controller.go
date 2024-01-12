@@ -129,7 +129,9 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 			clusterv1beta1.ConditionSeverityError,
 			err.Error(),
 		)
-		return ctrl.Result{RequeueAfter: 1 * time.Minute}, fmt.Errorf("failed to create release: %w", err)
+		record.Warnf(openstackclusterstackrelease, "IssueWithReleaseAssets", err.Error())
+		logger.Error(err, "failed to create release")
+		return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 
 	if download {
@@ -140,7 +142,8 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 		r.openStackClusterStackRelDownloadDirectoryMutex.Lock()
 
 		if err := downloadReleaseAssets(ctx, releaseTag, releaseAssets.LocalDownloadPath, gc); err != nil {
-			return ctrl.Result{RequeueAfter: 1 * time.Minute}, fmt.Errorf("failed to download release assets: %w", err)
+			logger.Error(err, "failed to download release assets")
+			return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 		}
 
 		r.openStackClusterStackRelDownloadDirectoryMutex.Unlock()

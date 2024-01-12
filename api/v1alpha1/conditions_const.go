@@ -53,6 +53,9 @@ const (
 
 	// CloudNotSetReason is used when user don't specify a valid clouds.yaml inside a secret.
 	CloudNotSetReason = "CloudNotSet"
+
+	// SecretNotFoundReason is used when the secret specified by the user is not found.
+	SecretNotFoundReason = "SecretNotFound"
 )
 
 const (

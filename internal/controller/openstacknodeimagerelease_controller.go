@@ -96,13 +96,24 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	// Get OpenStack cloud config from sercet
 	cloud, err := r.getCloudFromSecret(ctx, openstacknodeimagerelease.Namespace, openstacknodeimagerelease.Spec.IdentityRef.Name, openstacknodeimagerelease.Spec.CloudName)
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			conditions.MarkFalse(openstacknodeimagerelease,
+				apiv1alpha1.CloudAvailableCondition,
+				apiv1alpha1.SecretNotFoundReason,
+				clusterv1beta1.ConditionSeverityError,
+				err.Error(),
+			)
+			record.Warnf(openstacknodeimagerelease, "SecretNotFound", err.Error())
+			logger.Error(err, "failed to get secret")
+			return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
+		}
 		conditions.MarkFalse(openstacknodeimagerelease,
 			apiv1alpha1.CloudAvailableCondition,
 			apiv1alpha1.CloudNotSetReason,
 			clusterv1beta1.ConditionSeverityError,
 			err.Error(),
 		)
-		record.Warnf(openstacknodeimagerelease, "CloudNotSetReason", err.Error())
+		record.Warnf(openstacknodeimagerelease, "CloudNotSet", err.Error())
 		return ctrl.Result{}, fmt.Errorf("failed to get cloud from secret: %w", err)
 	}
 
@@ -286,7 +297,7 @@ func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Con
 		Name:      secretName,
 	}, secret)
 	if err != nil {
-		return emptyCloud, fmt.Errorf("failed to get secret %s: %w", secretName, err)
+		return emptyCloud, fmt.Errorf("failed to get secret %s in namespace %s: %w", secretName, secretNamespace, err)
 	}
 	content, ok := secret.Data[cloudsSecretKey]
 	if !ok {
