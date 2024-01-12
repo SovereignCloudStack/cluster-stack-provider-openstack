@@ -266,10 +266,6 @@ func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Con
 	var clouds clientconfig.Clouds
 	emptyCloud := clientconfig.Cloud{}
 
-	if cloudName == "" {
-		return emptyCloud, fmt.Errorf("secret name set to %s but no cloud was specified. Please set cloud_name in your machine spec", secretName)
-	}
-
 	secret := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{
 		Namespace: secretNamespace,
