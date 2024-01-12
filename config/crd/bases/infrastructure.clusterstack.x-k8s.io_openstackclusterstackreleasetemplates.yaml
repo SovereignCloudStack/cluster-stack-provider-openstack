@@ -48,8 +48,9 @@ spec:
                       state of OpenStackClusterStackRelease.
                     properties:
                       cloudName:
-                        description: The name of the cloud to use from the clouds
-                          secret
+                        description: CloudName is the name of the cloud to use from
+                          the cloud's secret.
+                        minLength: 1
                         type: string
                       identityRef:
                         description: IdentityRef is a reference to a identity to be
