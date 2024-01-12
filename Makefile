@@ -572,6 +572,12 @@ builder-image-push: ## Build $(CONTROLLER_SHORT)-builder to a new version. For m
 create-workload-cluster-openstack: $(ENVSUBST) $(KUBECTL)
 	cat .cluster.yaml | $(ENVSUBST) - | $(KUBECTL) apply -f -
 
+delete-workload-cluster-openstack: $(ENVSUBST) $(KUBECTL)
+	cat .cluster.yaml | $(ENVSUBST) - | $(KUBECTL) delete -f -
+
+get-kubeconfig-workload-cluster:
+	./hack/get-kubeconfig-of-workload-cluster.sh
+
 .PHONY: tilt-up
 tilt-up: env-vars-for-wl-cluster $(ENVSUBST) $(KUBECTL) $(KUSTOMIZE) $(TILT) cluster  ## Start a mgt-cluster & Tilt. Installs the CRDs and deploys the controllers
 	EXP_CLUSTER_RESOURCE_SET=true $(TILT) up --port=10351
