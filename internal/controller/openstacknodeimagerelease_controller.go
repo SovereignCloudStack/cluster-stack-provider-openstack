@@ -193,7 +193,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 
 	// Check wait for image ACTIVE status duration
 	if r.WaitForImageBecomeActiveMinutes > 0 && conditions.IsTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition) {
-		// Calculate elapsed time since the OpenStackImageImportStartCondition is true
+		// Calculate elapsed time since the OpenStackImageImportStartedCondition is true
 		startTime := conditions.GetLastTransitionTime(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition)
 		elapsedTime := time.Since(startTime.Time)
 
