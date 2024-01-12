@@ -88,8 +88,8 @@ def prepare_environment():
     if not os.path.exists('.cluster.yaml'):
         local("cp config/cspo/cluster.yaml .cluster.yaml")
 
-    if not os.path.exists('.clusterstacktemplate.yaml'):
-        local("cp config/cspo/clusterstacktemplate.yaml .clusterstacktemplate.yaml")
+    if not os.path.exists('.cspotemplate.yaml'):
+        local("cp config/cspo/cspotemplate.yaml .cspotemplate.yaml")
 
 def patch_args_with_extra_args(namespace, name, extra_args):
     args_str = str(local("kubectl get deployments {} -n {} -o jsonpath='{{.spec.template.spec.containers[0].args}}'".format(name, namespace)))
@@ -203,8 +203,8 @@ def create_secret():
     cmd = "cat .secret.yaml | {} | kubectl apply -f -".format(envsubst_cmd)
     local_resource('supersecret', cmd, labels=["clouds-yaml-secret"])    
 
-def clusterstack_template():
-    cmd = "cat .clusterstacktemplate.yaml | {} | kubectl apply -f -".format(envsubst_cmd)
+def cspo_template():
+    cmd = "cat .cspotemplate.yaml | {} | kubectl apply -f -".format(envsubst_cmd)
     local_resource('cspotemplate', cmd, labels=["cspo-template"])  
 
 def clusterstack():
@@ -242,6 +242,7 @@ def waitforsystem():
     local("kubectl wait --for=condition=ready --timeout=300s pod --all -n capi-kubeadm-bootstrap-system")
     local("kubectl wait --for=condition=ready --timeout=300s pod --all -n capi-kubeadm-control-plane-system")
     local("kubectl wait --for=condition=ready --timeout=300s pod --all -n capi-system")
+    local("kubectl wait --for=condition=ready --timeout=300s pod --all -n capo-system")
 
 def deploy_observability():
     k8s_yaml(blob(str(local("{} build {}".format(kustomize_cmd, "./hack/observability/"), quiet = True))))
@@ -282,11 +283,18 @@ prepare_environment()
 
 create_secret()
 
-clusterstack_template()
+cspo_template()
 
 cmd_button(
     "create workload cluster",
     argv=["make", "create-workload-cluster-openstack"],
     location=location.NAV,
     icon_name="add_circle",
+)
+
+cmd_button(
+    "delete workload cluster",
+    argv=["make", "delete-workload-cluster-openstack"],
+    location=location.NAV,
+    icon_name="cancel",
 )
