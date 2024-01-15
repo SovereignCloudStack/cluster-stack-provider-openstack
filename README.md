@@ -149,6 +149,13 @@ kubectl --kubeconfig kubeconfig.yaml get nodes
 
 Refer to the [doc page](./docs/develop.md) to find more information about how to develop this operator.
 
+# Controllers
+
+CSPO consists of two controllers. They should ensure that the desired node images are present in the targeted OpenStack project.
+Refer to the documentation for the CSPO controllers:
+- [OpenStackClusterStackRelease controller](./docs/openstackclusterstackrelease-controller.md)
+- [OpenStackNodeImageRelease controller](./docs/openstacknodeimagerelease-controller.md)
+
 # API Reference
 
 CSPO currently exposes the following APIs:

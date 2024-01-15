@@ -1,0 +1,45 @@
+@startuml openstack-nodeimage-release-controller
+
+start;
+:OpenStackNodeImageRelease controller;
+
+repeat
+  :OpenStackNodeImageRelease controller enqueues a Reconcile call;
+  :Load OpenStack Cloud configuration from Secret referenced in spec.IdentityRef;
+  :Create an OpenStack provider client;
+  :Create an OpenStack image service client;
+  if (Is the image specified in spec.Image already part of the OpenStack project?) then (no)
+    #LightBlue: Create an Image based on the spec.Image.CreateOpts;
+    #LightBlue: Import an Image using Glance's web-download method;
+    #Pink:Return RequeueError;
+    note left: make sure that Image has been created
+  else (yes)
+  endif
+  :Get Image details;
+
+  if (Is ImageImportTimeout set?) then (yes)
+    if (Has the Image a non-Active Status, and has the import elapsed time been exceeded?) then (yes)
+      #LightBlue:Image Import Timeout;
+      stop;
+    else (no)
+    endif
+  else (no)
+  endif
+  switch (Image Status?)
+  case ( Active )
+    #LightBlue:Set OpenStackNodeImageRelease status to ready;
+  case ( Deactivated or \n Killed or \n Unknown )
+    #LightBlue:Set OpenStackNodeImageRelease status to not ready;
+  case ( Queued or \n Saving or \n Deleted or \n PendingDelete or \n Importing )
+    #LightBlue:Set OpenStackNodeImageRelease status to not ready;
+    #Pink:Return RequeueError;
+    note left: wait for image to become active
+  endswitch
+repeat while (Reconcile returned RequeueError?) is (yes)
+if (Reconcile returned error) then (yes)
+  #Pink:Error reconciling OpenStackNodeImageRelease;
+else (no)
+endif
+stop;
+
+@enduml
