@@ -20,7 +20,9 @@ package main
 import (
 	"flag"
 	"os"
+	"time"
 
+	githubclient "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client"
 	infrastructureclusterstackxk8siov1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"github.com/sovereignCloudStack/cluster-stack-provider-openstack/internal/controller"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,6 +32,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -47,6 +50,11 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
+var (
+	releaseDir         string
+	imageImportTimeout int
+)
+
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
@@ -56,6 +64,8 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&releaseDir, "release-dir", "/tmp/downloads/", "Specify release directory for cluster-stack releases")
+	flag.IntVar(&imageImportTimeout, "image-import-timeout", 0, "Maximum time in minutes that you allow cspo to import image. If image-import-timeout <= 0, cspo waits forever.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -63,6 +73,8 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	syncPeriod := 5 * time.Minute
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -81,29 +93,30 @@ func main() {
 		// if you are doing or is intended to do any operation such as perform cleanups
 		// after the manager stops then its usage might be unsafe.
 		// LeaderElectionReleaseOnCancel: true,
+		Cache: cache.Options{
+			SyncPeriod: &syncPeriod,
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
+	gitFactory := githubclient.NewFactory()
+
 	if err = (&controller.OpenStackClusterStackReleaseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:              mgr.GetClient(),
+		Scheme:              mgr.GetScheme(),
+		ReleaseDirectory:    releaseDir,
+		GitHubClientFactory: gitFactory,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OpenStackClusterStackRelease")
 		os.Exit(1)
 	}
-	if err = (&controller.OpenStackClusterStackReleaseTemplateReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OpenStackClusterStackReleaseTemplate")
-		os.Exit(1)
-	}
 	if err = (&controller.OpenStackNodeImageReleaseReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:             mgr.GetClient(),
+		Scheme:             mgr.GetScheme(),
+		ImageImportTimeout: imageImportTimeout,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OpenStackNodeImageRelease")
 		os.Exit(1)

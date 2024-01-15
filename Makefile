@@ -166,7 +166,7 @@ all-tools: $(GOTESTSUM) $(go-cover-treemap) $(go-binsize-treemap) $(KIND) $(PACK
 ##@ Development
 
 env-vars-for-wl-cluster:
-	@./hack/ensure-env-variables.sh GIT_PROVIDER_B64 GIT_ACCESS_TOKEN_B64 GIT_ORG_NAME_B64 GIT_REPOSITORY_NAME_B64 EXP_CLUSTER_RESOURCE_SET CLUSTER_TOPOLOGY CLUSTER_NAME
+	@./hack/ensure-env-variables.sh GIT_PROVIDER_B64 GIT_ACCESS_TOKEN_B64 GIT_ORG_NAME_B64 GIT_REPOSITORY_NAME_B64 EXP_CLUSTER_RESOURCE_SET CLUSTER_TOPOLOGY CLUSTER_NAME SECRET_NAME CLOUD_NAME ENCODED_CLOUDS_YAML
 
 .PHONY: cluster
 cluster: $(CTLPTL) $(KUBECTL) ## Creates kind-dev Cluster 
@@ -205,6 +205,14 @@ clean: ## Remove all generated files
 clean-bin: ## Remove all generated helper binaries
 	rm -rf $(BIN_DIR)
 	rm -rf $(TOOLS_BIN_DIR)
+
+.PHONY: clean-release
+clean-release: ## Remove the release folder
+	rm -rf $(RELEASE_DIR)
+
+.PHONY: clean-release-git
+clean-release-git: ## Restores the git files usually modified during a release
+	git restore ./*manager_config_patch.yaml ./*manager_pull_policy.yaml
 
 ##@ Build
 
@@ -443,8 +451,7 @@ release: clean-release  ## Builds and push container images using the latest git
 	@if ! [ -z "$$(git status --porcelain)" ]; then echo "Your local git repository contains uncommitted changes, use git clean before proceeding."; exit 1; fi
 	git checkout "${RELEASE_TAG}"
 	# Set the manifest image to the production bucket.
-	$(MAKE) set-manifest-image MANIFEST_IMG=$(IMAGE_PREFIX)/cso MANIFEST_TAG=$(RELEASE_TAG) TARGET_RESOURCE="./config/default/manager_config_patch.yaml"
-	$(MAKE) set-manifest-image MANIFEST_IMG=$(IMAGE_PREFIX)/cspo MANIFEST_TAG=$(RELEASE_TAG) 
+	$(MAKE) set-manifest-image MANIFEST_IMG=$(IMAGE_PREFIX)/cspo MANIFEST_TAG=$(RELEASE_TAG) TARGET_RESOURCE="./config/default/manager_config_patch.yaml"
 	$(MAKE) set-manifest-pull-policy TARGET_RESOURCE="./config/default/manager_pull_policy.yaml"
 	## Build the manifests
 	$(MAKE) release-manifests clean-release-git
@@ -561,6 +568,15 @@ builder-image-push: ## Build $(CONTROLLER_SHORT)-builder to a new version. For m
 
 # .PHONY: test
 # test: test-unit test-integration ## Runs all unit and integration tests.
+
+create-workload-cluster-openstack: $(ENVSUBST) $(KUBECTL)
+	cat .cluster.yaml | $(ENVSUBST) - | $(KUBECTL) apply -f -
+
+delete-workload-cluster-openstack: $(ENVSUBST) $(KUBECTL)
+	cat .cluster.yaml | $(ENVSUBST) - | $(KUBECTL) delete -f -
+
+get-kubeconfig-workload-cluster:
+	./hack/get-kubeconfig-of-workload-cluster.sh
 
 .PHONY: tilt-up
 tilt-up: env-vars-for-wl-cluster $(ENVSUBST) $(KUBECTL) $(KUSTOMIZE) $(TILT) cluster  ## Start a mgt-cluster & Tilt. Installs the CRDs and deploys the controllers

@@ -21,7 +21,7 @@ settings = {
     "preload_images_for_kind": True,
     "kind_cluster_name": "cspo",
     "capi_version": "v1.5.2",
-    "cso_version": "v0.1.0-alpha.1",
+    "cso_version": "v0.1.0-alpha.2",
     "capo_version": "v0.8.0",
     "cert_manager_version": "v1.13.1",
     "kustomize_substitutions": {
@@ -77,13 +77,19 @@ def prepare_environment():
     local("kubectl create namespace cluster --dry-run=client -o yaml | kubectl apply -f -")
 
     # if it's already present then don't copy
-    # if not os.path.exists('.clusterstack.yaml'):
-        # local("cp config/cspo/clusterstack.yaml .clusterstack.yaml")
+    if not os.path.exists('.clusterstack.yaml'):
+        local("cp config/cspo/clusterstack.yaml .clusterstack.yaml")
 
-    # k8s_yaml('.clusterstack.yaml')
+    k8s_yaml('.clusterstack.yaml')
 
-    # if not os.path.exists('.cluster.yaml'):
-        # local("cp config/cspo/cluster.yaml .cluster.yaml")
+    if not os.path.exists('.secret.yaml'):
+        local("cp config/cspo/secret.yaml .secret.yaml")
+
+    if not os.path.exists('.cluster.yaml'):
+        local("cp config/cspo/cluster.yaml .cluster.yaml")
+
+    if not os.path.exists('.cspotemplate.yaml'):
+        local("cp config/cspo/cspotemplate.yaml .cspotemplate.yaml")
 
 def patch_args_with_extra_args(namespace, name, extra_args):
     args_str = str(local("kubectl get deployments {} -n {} -o jsonpath='{{.spec.template.spec.containers[0].args}}'".format(name, namespace)))
@@ -185,7 +191,7 @@ def deploy_cspo():
             "cspo-leader-election-rolebinding:rolebinding",
             "cspo-manager-rolebinding:clusterrolebinding",
             #"cspo-serving-cert:certificate",
-            #"cspo-cluster-stack-variables:secret",
+            "cspo-cluster-stack-variables:secret",
             #"cspo-selfsigned-issuer:issuer",
             #"cspo-validating-webhook-configuration:validatingwebhookconfiguration",
         ],
@@ -193,8 +199,16 @@ def deploy_cspo():
         labels = ["cspo"],
     )
 
-# def clusterstack():
-    # k8s_resource(objects = ["clusterstack:clusterstack"], new_name = "clusterstack", labels = ["CLUSTERSTACK"])
+def create_secret():
+    cmd = "cat .secret.yaml | {} | kubectl apply -f -".format(envsubst_cmd)
+    local_resource('supersecret', cmd, labels=["clouds-yaml-secret"])    
+
+def cspo_template():
+    cmd = "cat .cspotemplate.yaml | {} | kubectl apply -f -".format(envsubst_cmd)
+    local_resource('cspotemplate', cmd, labels=["cspo-template"])  
+
+def clusterstack():
+    k8s_resource(objects = ["clusterstack:clusterstack"], new_name = "clusterstack", labels = ["clusterstack"])
 
 def base64_encode(to_encode):
     encode_blob = local("echo '{}' | tr -d '\n' | base64 - | tr -d '\n'".format(to_encode), quiet = True)
@@ -228,6 +242,7 @@ def waitforsystem():
     local("kubectl wait --for=condition=ready --timeout=300s pod --all -n capi-kubeadm-bootstrap-system")
     local("kubectl wait --for=condition=ready --timeout=300s pod --all -n capi-kubeadm-control-plane-system")
     local("kubectl wait --for=condition=ready --timeout=300s pod --all -n capi-system")
+    local("kubectl wait --for=condition=ready --timeout=300s pod --all -n capo-system")
 
 def deploy_observability():
     k8s_yaml(blob(str(local("{} build {}".format(kustomize_cmd, "./hack/observability/"), quiet = True))))
@@ -260,6 +275,26 @@ deploy_cspo()
 
 deploy_capo()
 
+clusterstack()
+
 waitforsystem()
 
 prepare_environment()
+
+create_secret()
+
+cspo_template()
+
+cmd_button(
+    "create workload cluster",
+    argv=["make", "create-workload-cluster-openstack"],
+    location=location.NAV,
+    icon_name="add_circle",
+)
+
+cmd_button(
+    "delete workload cluster",
+    argv=["make", "delete-workload-cluster-openstack"],
+    location=location.NAV,
+    icon_name="cancel",
+)

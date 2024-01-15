@@ -5,6 +5,15 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
   - infrastructure.clusterstack.x-k8s.io
   resources:
   - openstackclusterstackreleases
@@ -26,32 +35,6 @@ rules:
   - infrastructure.clusterstack.x-k8s.io
   resources:
   - openstackclusterstackreleases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.clusterstack.x-k8s.io
-  resources:
-  - openstackclusterstackreleasetemplates
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - infrastructure.clusterstack.x-k8s.io
-  resources:
-  - openstackclusterstackreleasetemplates/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - infrastructure.clusterstack.x-k8s.io
-  resources:
-  - openstackclusterstackreleasetemplates/status
   verbs:
   - get
   - patch

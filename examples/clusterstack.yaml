@@ -1,0 +1,16 @@
+apiVersion: clusterstack.x-k8s.io/v1alpha1
+kind: ClusterStack
+metadata:
+  name: clusterstack
+spec:
+  provider: openstack
+  name: ferrol
+  kubernetesVersion: "1.27"
+  channel: stable
+  autoSubscribe: false
+  providerRef:
+    apiVersion: infrastructure.clusterstack.x-k8s.io/v1alpha1
+    kind: OpenStackClusterStackReleaseTemplate
+    name: cspotemplate
+  versions:
+    - v1
