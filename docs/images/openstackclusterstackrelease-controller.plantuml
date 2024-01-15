@@ -1,0 +1,46 @@
+@startuml openstack-clusterstack-release-controller
+
+start;
+:OpenStackClusterStackRelease controller;
+
+repeat
+  :OpenStackClusterStackRelease controller enqueues a Reconcile call;
+  :Create GitHub client;
+  if (Release assets have been download into the CSPO container) then (no)
+    #LightBlue:Download Release assets;
+    #Pink:Return RequeueError;
+    note left: make sure that Release can be accessed
+  else (yes)
+  endif
+  :Load list of required NodeImages from downloaded Release assets;
+  repeat
+    #LightBlue:Create OpenStackNodeImageRelease;
+    if (OpenStackNodeImageRelease already exists) then (yes)
+      #LightBlue:Ensure addoption of OpenStackNodeImageRelease \n /OpenStackNodeImageRelease could be shared/;
+    else (no)
+      #LightBlue:Create OpenStackNodeImageRelease;
+    endif
+  repeat while (More NodeImages) is (yes)
+  :List all owned OpenStackNodeImageReleases in namespace;
+  if (No owned OpenStackNodeImageReleases found) then (yes)
+    #Pink:Return RequeueError;
+    note left: waiting for OpenStackNodeImageRelease to be created
+  else (no)
+  endif
+  repeat
+    if (OpenStackNodeImageRelease is ready) then (yes)
+    else (no)
+      #LightBlue:Set OpenStackClusterStackRelease status to not ready;
+      #Pink:Return RequeueError;
+      note left: waiting for OpenStackNodeImageRelease to be ready
+    endif
+  repeat while (More owned OpenStackNodeImageReleases) is (yes)
+  #LightBlue:Set OpenStackClusterStackRelease status to ready;
+repeat while (Reconcile returned RequeueError?) is (yes)
+if (Reconcile returned error) then (yes)
+  #Pink:Error reconciling OpenStackClusterStackRelease;
+else (no)
+endif
+stop;
+
+@enduml
