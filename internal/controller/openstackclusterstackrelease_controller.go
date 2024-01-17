@@ -212,7 +212,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 
 	logger.Info("OpenStackClusterStackRelease **ready**")
 	conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.OpenStackNodeImageReleasesReadyCondition)
-	record.Eventf(openstackclusterstackrelease, "OpenStackNodeImageReleasesReady", "OpenStackClusterStackRelease objects are ready")
+	record.Eventf(openstackclusterstackrelease, "OpenStackNodeImageReleasesReady", "OpenStackNodeImageRelease objects are ready")
 	openstackclusterstackrelease.Status.Ready = true
 
 	return ctrl.Result{}, nil
@@ -229,7 +229,7 @@ func (r *OpenStackClusterStackReleaseReconciler) createOrUpdateOpenStackNodeImag
 		openStackNodeImageRelease.SetOwnerReferences(util.EnsureOwnerRef(openStackNodeImageRelease.GetOwnerReferences(), *ownerRef))
 
 		if err := r.Update(ctx, openStackNodeImageRelease); err != nil {
-			record.Warnf(openStackNodeImageRelease, "ErrorOpenStackNodeImageRelease", err.Error())
+			record.Warnf(openStackNodeImageRelease, "FailedUpdateOpenStackNodeImageRelease", err.Error())
 			return fmt.Errorf("failed to update OpenStackNodeImageRelease: %w", err)
 		}
 
@@ -254,7 +254,7 @@ func (r *OpenStackClusterStackReleaseReconciler) createOrUpdateOpenStackNodeImag
 	openStackNodeImageRelease.Spec.IdentityRef = openstackclusterstackrelease.Spec.IdentityRef
 
 	if err := r.Create(ctx, openStackNodeImageRelease); err != nil {
-		record.Warnf(openStackNodeImageRelease, "ErrorOpenStackNodeImageRelease", err.Error())
+		record.Warnf(openStackNodeImageRelease, "FailedCreateOpenStackNodeImageRelease", err.Error())
 		return fmt.Errorf("failed to create OpenStackNodeImageRelease: %w", err)
 	}
 
