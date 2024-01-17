@@ -528,16 +528,15 @@ generate-modules-ci: generate-modules
 
 KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env --bin-dir $(abspath $(TOOLS_BIN_DIR)) -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 
-# .PHONY: test-unit
-# test-unit: test-unit-openstack
-# 	echo done
+.PHONY: test-unit
+test-unit: test-unit-openstack ## Run unit tests
+	echo done
 
-# .PHONY: test-unit-openstack
-# test-unit-openstack: $(SETUP_ENVTEST) $(GOTESTSUM) $(HELM) ## Run unit and integration tests
-# 	@mkdir -p $(shell pwd)/.coverage
-# 	cd $(TEST_DIR); CREATE_KIND_CLUSTER=false KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GOTESTSUM) --junitfile=../.coverage/junit.xml --format testname -- -mod=vendor \
-# 	-covermode=atomic -coverprofile=../.coverage/cover.out -p=4 ./internal/controller/...
-
+.PHONY: test-unit-openstack
+test-unit-openstack: $(SETUP_ENVTEST) $(GOTESTSUM) $(HELM)
+	@mkdir -p $(shell pwd)/.coverage
+	CREATE_KIND_CLUSTER=false KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GOTESTSUM) --junitfile=.coverage/junit.xml --format testname -- -mod=vendor \
+	-covermode=atomic -coverprofile=.coverage/cover.out -p=4 ./internal/controller/...
 
 ##@ Main Targets
 ################
