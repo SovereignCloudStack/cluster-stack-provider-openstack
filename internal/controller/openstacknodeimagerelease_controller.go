@@ -58,6 +58,7 @@ const (
 //+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io,resources=openstacknodeimagereleases/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io,resources=openstacknodeimagereleases/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;update
+//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -160,6 +161,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	if imageID == "" {
 		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition, apiv1alpha1.OpenStackImageNotCreatedYetReason, clusterv1beta1.ConditionSeverityInfo, "image is not created yet")
 		conditions.MarkFalse(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition, apiv1alpha1.OpenStackImageImportNotStartReason, clusterv1beta1.ConditionSeverityInfo, "image import not start yet")
+		record.Eventf(openstacknodeimagerelease, "OpenStackImageImportStarted", "image is neither created nor imported yet %q", openstacknodeimagerelease.Spec.Image.CreateOpts.Name)
 		openstacknodeimagerelease.Status.Ready = false
 
 		imageCreateOpts := openstacknodeimagerelease.Spec.Image.CreateOpts
@@ -175,6 +177,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			logger.Error(err, "failed to create an image")
 			return ctrl.Result{}, nil
 		}
+		record.Eventf(openstacknodeimagerelease, "OpenStackImageCreated", "successfully created an image %q, ID %q", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, imageCreated.ID)
 
 		imageImportOpts := imageimport.CreateOpts{
 			Name: imageimport.WebDownloadMethod,
@@ -194,6 +197,8 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		}
 
 		conditions.MarkTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageImportStartedCondition)
+		record.Eventf(openstacknodeimagerelease, "OpenStackImageImportStarted", "successfully started an image import %q, ID %q", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, imageCreated.ID)
+
 		// requeue to make sure that image ID can be found via image name
 		return ctrl.Result{Requeue: true}, nil
 	}
@@ -242,6 +247,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		logger.Info("OpenStackNodeImageRelease **ready** - image is **ACTIVE**.", "name", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, "ID", imageID)
 		conditions.MarkTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageReadyCondition)
 		openstacknodeimagerelease.Status.Ready = true
+		record.Eventf(openstacknodeimagerelease, "OpenStackImageActive", "image status is ACTIVE %q, ID %q", openstacknodeimagerelease.Spec.Image.CreateOpts.Name, imageID)
 
 	case images.ImageStatusDeactivated, images.ImageStatusKilled:
 		// These statuses are unexpected. Hence we set a failure for them. See the explanation below:
@@ -257,7 +263,6 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		openstacknodeimagerelease.Status.Ready = false
 		record.Warnf(openstacknodeimagerelease, "OpenStackImageStatusUnexpected", err.Error())
 		logger.Error(err, "unexpected image status")
-		return ctrl.Result{}, nil
 
 	case images.ImageStatusQueued, images.ImageStatusSaving, images.ImageStatusDeleted, images.ImageStatusPendingDelete, images.ImageStatusImporting:
 		// The other statuses are expected. See the explanation below:
@@ -281,7 +286,6 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		openstacknodeimagerelease.Status.Ready = false
 		record.Warnf(openstacknodeimagerelease, "OpenStackImageStatusUnknown", err.Error())
 		logger.Error(err, "unknown image status")
-		return ctrl.Result{}, nil
 	}
 
 	return ctrl.Result{}, nil

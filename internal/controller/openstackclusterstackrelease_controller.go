@@ -68,6 +68,7 @@ const (
 //+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io,resources=openstackclusterstackreleases,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io,resources=openstackclusterstackreleases/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=infrastructure.clusterstack.x-k8s.io,resources=openstackclusterstackreleases/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -148,6 +149,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 
 		r.openStackClusterStackRelDownloadDirectoryMutex.Unlock()
 
+		record.Eventf(openstackclusterstackrelease, "ClusterStackReleaseAssetsReady", "successfully downloaded ClusterStackReleaseAssets %q", releaseTag)
 		// requeue to make sure release assets can be accessed
 		return ctrl.Result{Requeue: true}, nil
 	}
@@ -174,7 +176,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 		osnirName := fmt.Sprintf("%s-%s-%s", nameWithoutVersion, openStackNodeImage.CreateOpts.Name, nodeImageVersion)
 
 		if err := r.createOrUpdateOpenStackNodeImageRelease(ctx, openstackclusterstackrelease, osnirName, openStackNodeImage, ownerRef); err != nil {
-			return ctrl.Result{}, fmt.Errorf("failed to get or create OpenStackNodeImageRelease %s/%s: %w", openstackclusterstackrelease.Namespace, osnirName, err)
+			return ctrl.Result{}, fmt.Errorf("failed to create or update OpenStackNodeImageRelease %s/%s: %w", openstackclusterstackrelease.Namespace, osnirName, err)
 		}
 	}
 
@@ -210,6 +212,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 
 	logger.Info("OpenStackClusterStackRelease **ready**")
 	conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.OpenStackNodeImageReleasesReadyCondition)
+	record.Eventf(openstackclusterstackrelease, "OpenStackNodeImageReleasesReady", "OpenStackNodeImageRelease objects are ready")
 	openstackclusterstackrelease.Status.Ready = true
 
 	return ctrl.Result{}, nil
@@ -226,10 +229,7 @@ func (r *OpenStackClusterStackReleaseReconciler) createOrUpdateOpenStackNodeImag
 		openStackNodeImageRelease.SetOwnerReferences(util.EnsureOwnerRef(openStackNodeImageRelease.GetOwnerReferences(), *ownerRef))
 
 		if err := r.Update(ctx, openStackNodeImageRelease); err != nil {
-			record.Eventf(openStackNodeImageRelease,
-				"ErrorOpenStackNodeImageRelease",
-				"failed to update %s OpenStackNodeImageRelease: %s", osnirName, err.Error(),
-			)
+			record.Warnf(openStackNodeImageRelease, "FailedUpdateOpenStackNodeImageRelease", err.Error())
 			return fmt.Errorf("failed to update OpenStackNodeImageRelease: %w", err)
 		}
 
@@ -254,11 +254,11 @@ func (r *OpenStackClusterStackReleaseReconciler) createOrUpdateOpenStackNodeImag
 	openStackNodeImageRelease.Spec.IdentityRef = openstackclusterstackrelease.Spec.IdentityRef
 
 	if err := r.Create(ctx, openStackNodeImageRelease); err != nil {
-		record.Warnf(openStackNodeImageRelease, "ErrorOpenStackNodeImageRelease", err.Error())
+		record.Warnf(openStackNodeImageRelease, "FailedCreateOpenStackNodeImageRelease", err.Error())
 		return fmt.Errorf("failed to create OpenStackNodeImageRelease: %w", err)
 	}
 
-	record.Eventf(openStackNodeImageRelease, "OpenStackNodeImageReleaseCreated", "successfully created OpenStackNodeImageRelease object %q", osnirName)
+	record.Eventf(openstackclusterstackrelease, "OpenStackNodeImageReleaseCreated", "successfully created OpenStackNodeImageRelease object %q", osnirName)
 	return nil
 }
 
