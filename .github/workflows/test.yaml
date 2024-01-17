@@ -52,13 +52,8 @@ jobs:
         run: |
           go mod download
 
-      # - name: Running unit tests
-      #   env:
-      #     GIT_PROVIDER: github
-      #     GIT_ORG_NAME: sovereignCloudStack
-      #     GIT_REPOSITORY_NAME: fake-cluster-stacks
-      #     GIT_ACCESS_TOKEN: ${{ secrets.GIT_ACCESS_TOKEN }}
-      #   run: make test-unit
+      - name: Running unit tests
+        run: make test-unit
 
       # - name: Create Report
       #   run: make report-cover-html report-cover-treemap
