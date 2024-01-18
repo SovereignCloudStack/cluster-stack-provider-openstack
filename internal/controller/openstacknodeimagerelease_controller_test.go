@@ -19,14 +19,18 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	th "github.com/gophercloud/gophercloud/testhelper"
+	fakeclient "github.com/gophercloud/gophercloud/testhelper/client"
 	"github.com/gophercloud/utils/openstack/clientconfig"
-
+	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -56,7 +60,7 @@ clouds:
 			Namespace: secretNamespace,
 		},
 		Data: map[string][]byte{cloudsSecretKey: []byte(cloudsYAML)},
-		Type: v1.SecretTypeOpaque,
+		Type: corev1.SecretTypeOpaque,
 	}
 	err := client.Create(context.TODO(), secret)
 	assert.NoError(t, err)
@@ -67,16 +71,20 @@ clouds:
 
 	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName, cloudName)
 
+	expectedCloud := clientconfig.Cloud{
+		AuthInfo: &clientconfig.AuthInfo{
+			Username:    "test_user",
+			Password:    "test_password",
+			ProjectName: "test_project",
+			ProjectID:   "test_project_id",
+			AuthURL:     "test_auth_url",
+			DomainName:  "test_domain",
+		},
+		RegionName: "test_region",
+	}
 	assert.NoError(t, err)
-	assert.Equal(t, "test_user", cloud.AuthInfo.Username)
-	assert.Equal(t, "test_password", cloud.AuthInfo.Password)
-	assert.Equal(t, "test_project", cloud.AuthInfo.ProjectName)
-	assert.Equal(t, "test_project_id", cloud.AuthInfo.ProjectID)
-	assert.Equal(t, "test_auth_url", cloud.AuthInfo.AuthURL)
-	assert.Equal(t, "test_domain", cloud.AuthInfo.DomainName)
-	assert.Equal(t, "test_region", cloud.RegionName)
+	assert.Equal(t, expectedCloud, cloud)
 
-	// Cleanup the resources
 	err = client.Delete(context.TODO(), secret)
 	assert.NoError(t, err)
 }
@@ -88,31 +96,40 @@ func TestGetCloudFromSecretNotFound(t *testing.T) {
 		Client: client,
 	}
 
-	cloud, err := r.getCloudFromSecret(context.TODO(), "nonexistent-namespace", "nonexistent-secret", "nonexistent-cloud")
+	secretName := "nonexistent-secret"
+	secretNamespace := "nonexistent-namespace"
+	expectedError := "secrets \"nonexistent-secret\" not found"
+	cloudName := "nonexistent-cloud"
+
+	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName, cloudName)
+
+	expectedErrorMessage := fmt.Sprintf("failed to get secret %s in namespace %s: %v", secretName, secretNamespace, expectedError)
 
 	assert.Error(t, err)
-	assert.True(t, errors.IsNotFound(err))
+	assert.True(t, apierrors.IsNotFound(err))
 	assert.Equal(t, clientconfig.Cloud{}, cloud)
+	assert.EqualError(t, err, expectedErrorMessage)
 }
 
-func TestGetCloudFromSecretMissingcloudsSecretKey(t *testing.T) {
+func TestGetCloudFromSecretMissingCloudsSecretKey(t *testing.T) {
 	client := fake.NewClientBuilder().Build()
 
 	r := &OpenStackNodeImageReleaseReconciler{
 		Client: client,
 	}
 
-	// Create a secret with the bad cloudsSecretKey
 	secretName := "test-secret"
 	secretNamespace := "test-namespace"
 	cloudName := "openstack"
+
+	// Create a secret with the bad cloudsSecretKey.
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
 			Namespace: secretNamespace,
 		},
 		Data: map[string][]byte{"bad-clouds-secret-key": []byte("test-value")},
-		Type: v1.SecretTypeOpaque,
+		Type: corev1.SecretTypeOpaque,
 	}
 	err := client.Create(context.TODO(), secret)
 	assert.NoError(t, err)
@@ -120,10 +137,9 @@ func TestGetCloudFromSecretMissingcloudsSecretKey(t *testing.T) {
 	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName, cloudName)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), fmt.Sprintf("OpenStack credentials secret %s did not contain key %s", secretName, cloudsSecretKey))
+	assert.EqualError(t, err, fmt.Sprintf("OpenStack credentials secret %s did not contain key %s", secretName, cloudsSecretKey))
 	assert.Equal(t, clientconfig.Cloud{}, cloud)
 
-	// Cleanup the resources
 	err = client.Delete(context.TODO(), secret)
 	assert.NoError(t, err)
 }
@@ -157,7 +173,7 @@ clouds:
 			Namespace: secretNamespace,
 		},
 		Data: map[string][]byte{cloudsSecretKey: []byte(cloudsYAML)},
-		Type: v1.SecretTypeOpaque,
+		Type: corev1.SecretTypeOpaque,
 	}
 	err := client.Create(context.TODO(), secret)
 	assert.NoError(t, err)
@@ -165,10 +181,255 @@ clouds:
 	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName, cloudName)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), fmt.Sprintf("failed to find cloud %s in %s", cloudName, cloudsSecretKey))
+	assert.EqualError(t, err, fmt.Sprintf("failed to find cloud %s in %s", cloudName, cloudsSecretKey))
 	assert.Equal(t, clientconfig.Cloud{}, cloud)
 
-	// Cleanup the resources
 	err = client.Delete(context.TODO(), secret)
 	assert.NoError(t, err)
+}
+
+func TestFindImageByName(t *testing.T) {
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	HandleImageListSuccessfully(t)
+
+	imageName := "test_image"
+
+	imageID, err := findImageByName(fakeclient.ServiceClient(), imageName)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "123", imageID)
+}
+
+// HandleImageListSuccessfully sets up a fake response for image list request.
+func HandleImageListSuccessfully(t *testing.T) { //nolint: gocritic
+	t.Helper() // Indicate that this is a test helper function
+	th.Mux.HandleFunc("/images", func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "GET")
+		th.TestHeader(t, r, "X-Auth-Token", fakeclient.TokenID)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{
+			"images": [
+				{"id": "123", "name": "test_image"},
+				{"id": "456", "name": "test_image2"},
+				{"id": "789", "name": "test_image3"}
+			]
+		}`)
+	})
+}
+
+func TestFindImageByNameWrongImageName(t *testing.T) {
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	HandleImageListSuccessfully(t)
+
+	imageName := "test_bad_image"
+
+	imageID, err := findImageByName(fakeclient.ServiceClient(), imageName)
+
+	assert.NoError(t, err)
+	assert.NotEqual(t, "231", imageID)
+}
+
+func TestFindImageByNameNotFound(t *testing.T) {
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	imageName := "test_image"
+
+	th.Mux.HandleFunc("/images", func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, http.MethodGet)
+		th.TestHeader(t, r, "X-Auth-Token", fakeclient.TokenID)
+
+		// Respond with a 404 Not Found error.
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, `{"error": {"message": "Image not found"}}`)
+	})
+
+	fakeClient := fakeclient.ServiceClient()
+
+	imageID, err := findImageByName(fakeClient, imageName)
+
+	assert.Error(t, err)
+	assert.Equal(t, "", imageID)
+	assert.Contains(t, err.Error(), fmt.Sprintf("failed to list images with name %s: Resource not found", imageName))
+}
+
+// HandleImageCreationSuccessfully test setup.
+func HandleImageCreationSuccessfully(t *testing.T) { //nolint: gocritic
+	t.Helper() // Indicate that this is a test helper function
+	th.Mux.HandleFunc("/images", func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "POST")
+		th.TestHeader(t, r, "X-Auth-Token", fakeclient.TokenID)
+		th.TestJSONRequest(t, r, `{
+			"id": "test_id",
+			"name": "test_image",
+			"disk_format": "qcow2",
+			"container_format": "bare"
+		}`)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprintf(w, `{
+			"status": "queued",
+			"name": "test_image",
+			"container_format": "bare",
+			"disk_format": "qcow2",
+			"visibility": "shared",
+			"min_disk": 0,
+			"id": "test_id"
+		}`)
+	})
+}
+
+func TestCreateImage(t *testing.T) {
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	HandleImageCreationSuccessfully(t)
+
+	createOpts := &apiv1alpha1.CreateOpts{
+		ID:              "test_id",
+		Name:            "test_image",
+		DiskFormat:      "qcow2",
+		ContainerFormat: "bare",
+	}
+
+	fakeClient := fakeclient.ServiceClient()
+
+	createdImage, err := createImage(fakeClient, createOpts)
+
+	expectedImage := images.Image{
+		ID:              "test_id",
+		Name:            "test_image",
+		Status:          "queued",
+		ContainerFormat: "bare",
+		DiskFormat:      "qcow2",
+		Visibility:      "shared",
+		Properties:      map[string]interface{}{},
+	}
+
+	assert.NoError(t, err)
+	assert.NotNil(t, createdImage)
+	assert.Equal(t, images.ImageVisibility("shared"), createdImage.Visibility)
+	assert.Equal(t, &expectedImage, createdImage)
+}
+
+// HandleImageCreationWithError test setup.
+func HandleImageCreationWithError(t *testing.T, errMsg string) {
+	t.Helper() // Indicate that this is a test helper function
+	th.Mux.HandleFunc("/images", func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "POST")
+		th.TestHeader(t, r, "X-Auth-Token", fakeclient.TokenID)
+		th.TestJSONRequest(t, r, `{
+			"id": "test_id",
+			"name": "test_image",
+			"disk_format": "qcow2",
+			"container_format": "bare"
+		}`)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{
+			"error": {
+				"message": "%s"
+			}
+		}`, errMsg)
+	})
+}
+
+func TestCreateImageFailed(t *testing.T) {
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	HandleImageCreationWithError(t, "Internal Server Error")
+
+	createOpts := &apiv1alpha1.CreateOpts{
+		ID:              "test_id",
+		Name:            "test_image",
+		DiskFormat:      "qcow2",
+		ContainerFormat: "bare",
+	}
+
+	fakeClient := fakeclient.ServiceClient()
+
+	createdImage, err := createImage(fakeClient, createOpts)
+
+	assert.Error(t, err)
+	assert.Nil(t, createdImage)
+	assert.EqualError(t, err, fmt.Sprintf("failed to create image with name %s: Internal Server Error", createOpts.Name))
+}
+
+// HandleImageImportSuccessfully test setup.
+func HandleImageImportSuccessfully(t *testing.T, imageID string) {
+	t.Helper() // Indicate that this is a test helper function
+	th.Mux.HandleFunc(fmt.Sprintf("/images/%s/import", imageID), func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "POST")
+		th.TestHeader(t, r, "X-Auth-Token", fakeclient.TokenID)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		fmt.Fprintf(w, `{
+			"status": "queued"
+		}`)
+	})
+}
+
+func TestImportImage(t *testing.T) {
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	imageID := "test_image_id"
+	HandleImageImportSuccessfully(t, imageID)
+
+	createOpts := imageimport.CreateOpts{
+		Name: imageimport.WebDownloadMethod,
+	}
+
+	fakeClient := fakeclient.ServiceClient()
+
+	err := importImage(fakeClient, imageID, createOpts)
+
+	assert.NoError(t, err)
+}
+
+// HandleImageImportWithError test setup.
+func HandleImageImportWithError(t *testing.T, imageID string, statusCode int, errMsg string) {
+	t.Helper() // Indicate that this is a test helper function
+	th.Mux.HandleFunc(fmt.Sprintf("/images/%s/import", imageID), func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "POST")
+		th.TestHeader(t, r, "X-Auth-Token", fakeclient.TokenID)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(statusCode)
+		fmt.Fprintf(w, `{
+			"error": {
+				"message": "%s"
+			}
+		}`, errMsg)
+	})
+}
+
+func TestImportImageError(t *testing.T) {
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	imageID := "test_image_id"
+	HandleImageImportWithError(t, imageID, http.StatusInternalServerError, "Internal Server Error")
+
+	createOpts := imageimport.CreateOpts{
+		Name: "test_import_image",
+	}
+
+	fakeClient := fakeclient.ServiceClient()
+
+	err := importImage(fakeClient, imageID, createOpts)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, fmt.Sprintf("failed to import image with ID %s: Internal Server Error", imageID))
 }
