@@ -17,7 +17,7 @@ limitations under the License.
 // Package main is the main package.
 package main
 
-// Import packages including all Kubernetes client auth plugins: k8s.io/client-go/plugin/pkg/client/auth
+// Import packages including all Kubernetes client auth plugins: k8s.io/client-go/plugin/pkg/client/auth.
 import (
 	"flag"
 	"os"
