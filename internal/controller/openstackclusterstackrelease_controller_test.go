@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -51,6 +52,7 @@ func TestCutOpenStackClusterStackReleaseVersionFromReleaseTag(t *testing.T) {
 	nameWithoutVersion, err = cutOpenStackClusterStackReleaseVersionFromReleaseTag(releaseTag)
 
 	assert.Error(t, err)
+	assert.EqualError(t, err, fmt.Sprintf("invalid release tag %s", releaseTag))
 	assert.Empty(t, nameWithoutVersion)
 }
 
@@ -135,13 +137,16 @@ func TestMatchOwnerReference(t *testing.T) {
 
 func TestGetNodeImagesFromLocal(t *testing.T) {
 	// wrong path
-	nodeImages, err := getNodeImagesFromLocal("../../test/releases/cluster-stacks/openstack-ferrol-1-27-4v")
+	wrongPath := "../../test/releases/cluster-stacks/openstack-ferrol-1-27-4v"
+	nodeImages, err := getNodeImagesFromLocal(wrongPath)
 	assert.Error(t, err)
+	assert.ErrorContains(t, err, fmt.Sprintf("failed to read node-images file %s/node-images.yaml", wrongPath))
 	assert.Nil(t, nodeImages)
 
 	// wrong node-images file
 	nodeImages, err = getNodeImagesFromLocal("../../test/releases/cluster-stacks/openstack-ferrol-1-27-v4-wrong-node-images")
 	assert.Error(t, err)
+	assert.ErrorContains(t, err, "failed to unmarshal node-images")
 	assert.Nil(t, nodeImages)
 
 	// correct node-images file
