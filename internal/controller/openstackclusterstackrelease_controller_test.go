@@ -18,10 +18,14 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
+	githubmocks "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client/mocks"
+	"github.com/google/go-github/v52/github"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -30,8 +34,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	capoapiv1alpha7 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 const (
@@ -166,6 +172,305 @@ func TestGetNodeImagesFromLocal(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestDownloadReleaseAssets(t *testing.T) {
+	ctx := context.TODO()
+	releaseTag := "v1.0.0"
+	downloadPath := "/tmp/download"
+	assetlist := []string{metadataFileName, nodeImagesFileName}
+	mockGitHubClient := githubmocks.NewClient(t)
+	mockHTTPResponse := &http.Response{
+		StatusCode: http.StatusOK,
+	}
+	mockResponse := &github.Response{
+		Response: mockHTTPResponse,
+	}
+	mockRepoRelease := &github.RepositoryRelease{
+		Name: github.String("test-release-name"),
+	}
+
+	mockGitHubClient.On("GetReleaseByTag", ctx, releaseTag).Return(mockRepoRelease, mockResponse, nil)
+	repoRelease, resp, err := mockGitHubClient.GetReleaseByTag(ctx, releaseTag)
+	assert.NoError(t, err)
+	assert.Equal(t, resp.StatusCode, http.StatusOK)
+
+	mockGitHubClient.On("DownloadReleaseAssets", ctx, repoRelease, downloadPath, assetlist).Return(nil)
+
+	err = downloadReleaseAssets(ctx, releaseTag, downloadPath, mockGitHubClient)
+
+	assert.NoError(t, err)
+}
+
+func TestDownloadReleaseAssetsFailedToDownload(t *testing.T) {
+	ctx := context.TODO()
+	releaseTag := "v1.0.0"
+	mockGitHubClient := githubmocks.NewClient(t)
+	downloadPath := "/tmp/download"
+	assetlist := []string{metadataFileName, nodeImagesFileName}
+	mockHTTPResponse := &http.Response{
+		StatusCode: http.StatusOK,
+	}
+	mockResponse := &github.Response{
+		Response: mockHTTPResponse,
+	}
+	mockRepoRelease := &github.RepositoryRelease{
+		Name: github.String("test-release-name"),
+	}
+
+	mockGitHubClient.On("GetReleaseByTag", ctx, releaseTag).Return(mockRepoRelease, mockResponse, nil)
+	repoRelease, resp, err := mockGitHubClient.GetReleaseByTag(ctx, releaseTag)
+	assert.NoError(t, err)
+	assert.Equal(t, resp.StatusCode, http.StatusOK)
+
+	mockGitHubClient.On("DownloadReleaseAssets", ctx, repoRelease, downloadPath, assetlist).Return(errors.New("failed to download release assets"))
+	err = downloadReleaseAssets(ctx, releaseTag, downloadPath, mockGitHubClient)
+
+	assert.ErrorContains(t, err, "failed to download release assets")
+}
+
+func TestGetOwnedOpenStackNodeImageReleases(t *testing.T) {
+	scheme := runtime.NewScheme()
+	err := apiv1alpha1.AddToScheme(scheme)
+	assert.NoError(t, err)
+	client := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+	openstackclusterstackrelease := &apiv1alpha1.OpenStackClusterStackRelease{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "clusterstack.x-k8s.io/v1alpha1",
+			Kind:       "OpenStackClusterStackRelease",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-release",
+			Namespace: "test-namespace",
+		},
+		Spec: apiv1alpha1.OpenStackClusterStackReleaseSpec{
+			CloudName: "test-cloudname",
+			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
+				Kind: "Secret",
+				Name: "supersecret",
+			},
+		},
+	}
+	assert.NoError(t, client.Create(context.TODO(), openstackclusterstackrelease))
+
+	openstackNodeImageRelease := &apiv1alpha1.OpenStackNodeImageRelease{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "clusterstack.x-k8s.io/v1alpha1",
+			Kind:       "OpenStackNodeImageRelease",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-node-image-release",
+			Namespace: "test-namespace",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: openstackclusterstackrelease.APIVersion,
+					Kind:       openstackclusterstackrelease.Kind,
+					Name:       openstackclusterstackrelease.Name,
+					UID:        openstackclusterstackrelease.UID,
+				},
+			},
+		},
+	}
+
+	assert.NoError(t, client.Create(context.TODO(), openstackNodeImageRelease))
+
+	r := &OpenStackClusterStackReleaseReconciler{
+		Client: client,
+	}
+
+	ownedOpenStackNodeImageReleases, err := r.getOwnedOpenStackNodeImageReleases(context.TODO(), openstackclusterstackrelease)
+
+	assert.NoError(t, err)
+	assert.NotEmpty(t, ownedOpenStackNodeImageReleases)
+	assert.Contains(t, ownedOpenStackNodeImageReleases, openstackNodeImageRelease)
+}
+
+func TestCreateOpenStackNodeImageRelease(t *testing.T) {
+	scheme := runtime.NewScheme()
+	err := apiv1alpha1.AddToScheme(scheme)
+	assert.NoError(t, err)
+	client := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+	openstackclusterstackrelease := &apiv1alpha1.OpenStackClusterStackRelease{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "clusterstack.x-k8s.io/v1alpha1",
+			Kind:       "OpenStackClusterStackRelease",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-release",
+			Namespace: "test-namespace",
+		},
+		Spec: apiv1alpha1.OpenStackClusterStackReleaseSpec{
+			CloudName: "test-cloudname",
+			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
+				Kind: "Secret",
+				Name: "supersecret",
+			},
+		},
+	}
+	assert.NoError(t, client.Create(context.TODO(), openstackclusterstackrelease))
+
+	openStackNodeImage := &apiv1alpha1.OpenStackNodeImage{
+		URL: "test-url",
+		CreateOpts: &apiv1alpha1.CreateOpts{
+			Name:            "test-image",
+			ID:              "testID",
+			ContainerFormat: "bare",
+			DiskFormat:      "qcow2",
+		},
+	}
+
+	ownerRef := &metav1.OwnerReference{
+		APIVersion: openstackclusterstackrelease.APIVersion,
+		Kind:       openstackclusterstackrelease.Kind,
+		Name:       openstackclusterstackrelease.Name,
+		UID:        openstackclusterstackrelease.UID,
+	}
+
+	r := &OpenStackClusterStackReleaseReconciler{
+		Client: client,
+	}
+
+	err = r.createOrUpdateOpenStackNodeImageRelease(context.TODO(), openstackclusterstackrelease, "test-osnir", openStackNodeImage, ownerRef)
+
+	assert.NoError(t, err)
+	osnir := &apiv1alpha1.OpenStackNodeImageRelease{}
+	err = client.Get(context.TODO(), types.NamespacedName{Name: "test-osnir", Namespace: "test-namespace"}, osnir)
+	assert.NoError(t, err)
+	assert.NotNil(t, osnir)
+
+	expectedosnir := &apiv1alpha1.OpenStackNodeImageRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "OpenStackNodeImageRelease",
+			APIVersion: apiv1alpha1.GroupVersion.String(),
+		},
+		Spec: apiv1alpha1.OpenStackNodeImageReleaseSpec{
+			CloudName: "test-cloudname",
+			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
+				Kind: "Secret",
+				Name: "supersecret",
+			},
+			Image: &apiv1alpha1.OpenStackNodeImage{
+				URL: "test-url",
+				CreateOpts: &apiv1alpha1.CreateOpts{
+					Name:            "test-image",
+					ID:              "testID",
+					ContainerFormat: "bare",
+					DiskFormat:      "qcow2",
+				},
+			},
+		},
+	}
+	assert.Equal(t, expectedosnir.Spec, osnir.Spec)
+	assert.Equal(t, expectedosnir.TypeMeta, osnir.TypeMeta)
+
+	// Test cleanup
+	err = client.Delete(context.TODO(), osnir)
+	assert.NoError(t, err)
+	err = client.Delete(context.TODO(), openstackclusterstackrelease)
+	assert.NoError(t, err)
+}
+
+func TestUpdateOpenStackNodeImageRelease(t *testing.T) {
+	scheme := runtime.NewScheme()
+	err := apiv1alpha1.AddToScheme(scheme)
+	assert.NoError(t, err)
+	client := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+	openstackclusterstackrelease := &apiv1alpha1.OpenStackClusterStackRelease{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "clusterstack.x-k8s.io/v1alpha1",
+			Kind:       "OpenStackClusterStackRelease",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-release",
+			Namespace: "test-namespace",
+		},
+		Spec: apiv1alpha1.OpenStackClusterStackReleaseSpec{
+			CloudName: "test-cloudname",
+			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
+				Kind: "Secret",
+				Name: "supersecret",
+			},
+		},
+	}
+	assert.NoError(t, client.Create(context.TODO(), openstackclusterstackrelease))
+
+	openStackNodeImage := &apiv1alpha1.OpenStackNodeImage{
+		URL: "test-url",
+		CreateOpts: &apiv1alpha1.CreateOpts{
+			Name:            "test-image",
+			ID:              "testID",
+			ContainerFormat: "bare",
+			DiskFormat:      "qcow2",
+		},
+	}
+
+	ownerRef := &metav1.OwnerReference{
+		APIVersion: openstackclusterstackrelease.APIVersion,
+		Kind:       openstackclusterstackrelease.Kind,
+		Name:       openstackclusterstackrelease.Name,
+		UID:        "test-uid",
+	}
+
+	r := &OpenStackClusterStackReleaseReconciler{
+		Client: client,
+	}
+
+	osnir := &apiv1alpha1.OpenStackNodeImageRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "OpenStackNodeImageRelease",
+			APIVersion: apiv1alpha1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-update-osnir",
+			Namespace: "test-namespace",
+		},
+		Spec: apiv1alpha1.OpenStackNodeImageReleaseSpec{
+			CloudName: "test-cloudname",
+			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
+				Kind: "Secret",
+				Name: "supersecret",
+			},
+			Image: &apiv1alpha1.OpenStackNodeImage{
+				URL: "test-url",
+				CreateOpts: &apiv1alpha1.CreateOpts{
+					Name:            "test-image",
+					ID:              "testID",
+					ContainerFormat: "bare",
+					DiskFormat:      "qcow2",
+				},
+			},
+		},
+	}
+	osnir.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
+	assert.NoError(t, client.Create(context.TODO(), osnir))
+
+	newOwnerRef := &metav1.OwnerReference{
+		APIVersion: openstackclusterstackrelease.APIVersion,
+		Kind:       openstackclusterstackrelease.Kind,
+		Name:       openstackclusterstackrelease.Name,
+		UID:        "test-new-uid",
+	}
+
+	err = client.Get(context.TODO(), types.NamespacedName{Name: "test-update-osnir", Namespace: "test-namespace"}, &apiv1alpha1.OpenStackNodeImageRelease{})
+	assert.NoError(t, err)
+	assert.Equal(t, ownerRef.UID, osnir.OwnerReferences[0].UID)
+
+	err = r.createOrUpdateOpenStackNodeImageRelease(context.TODO(), openstackclusterstackrelease, "test-update-osnir", openStackNodeImage, newOwnerRef)
+	assert.NoError(t, err)
+
+	err = client.Get(context.TODO(), types.NamespacedName{Name: "test-update-osnir", Namespace: "test-namespace"}, osnir)
+	assert.NoError(t, err)
+	assert.NotNil(t, osnir)
+	assert.Equal(t, *newOwnerRef, osnir.OwnerReferences[0])
+
+	// Test cleanup
+	err = client.Delete(context.TODO(), osnir)
+	assert.NoError(t, err)
+	err = client.Delete(context.TODO(), openstackclusterstackrelease)
+	assert.NoError(t, err)
 }
 
 var _ = Describe("OpenStackClusterStackRelease controller", func() {

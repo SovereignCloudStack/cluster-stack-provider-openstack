@@ -22,6 +22,7 @@ github.com/ProtonMail/go-crypto/openpgp/s2k
 ## explicit; go 1.19
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/clusterstack
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client
+github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client/mocks
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/kubernetesversion
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/release
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/version
@@ -251,9 +252,13 @@ github.com/prometheus/procfs/internal/util
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
+# github.com/stretchr/objx v0.5.1
+## explicit; go 1.13
+github.com/stretchr/objx
 # github.com/stretchr/testify v1.8.4
 ## explicit; go 1.20
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/mock
 # go.uber.org/goleak v1.3.0
 ## explicit; go 1.20
 # go.uber.org/multierr v1.11.0
