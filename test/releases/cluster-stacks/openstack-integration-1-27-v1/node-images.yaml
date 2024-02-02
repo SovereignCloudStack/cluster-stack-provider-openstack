@@ -1,0 +1,8 @@
+apiVersion: openstack.infrastructure.clusterstack.x-k8s.io/v1alpha1
+openStackNodeImages:
+  - url: https://releases.ubuntu.com/18.04.5/ubuntu-18.04.5-desktop-amd64.iso
+    createOpts:
+      name: ubuntu-test-image-v1.27.8
+      disk_format: qcow2
+      container_format: bare
+      visibility: shared

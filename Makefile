@@ -528,6 +528,10 @@ generate-modules-ci: generate-modules
 
 KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env --bin-dir $(abspath $(TOOLS_BIN_DIR)) -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 
+.PHONY: test-integration ## Run integration tests
+test-integration: test-integration-github test-integration-openstack
+	echo done
+
 .PHONY: test-unit
 test-unit: test-unit-openstack ## Run unit tests
 	echo done
@@ -537,6 +541,18 @@ test-unit-openstack: $(SETUP_ENVTEST) $(GOTESTSUM) $(HELM)
 	@mkdir -p $(shell pwd)/.coverage
 	CREATE_KIND_CLUSTER=false KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GOTESTSUM) --junitfile=.coverage/junit.xml --format testname -- -mod=vendor \
 	-covermode=atomic -coverprofile=.coverage/cover.out -p=4 ./internal/controller/...
+
+.PHONY: test-integration-github
+test-integration-github: $(SETUP_ENVTEST) $(GOTESTSUM)
+	@mkdir -p $(shell pwd)/.coverage
+	CREATE_KIND_CLUSTER=false KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GOTESTSUM) --junitfile=.coverage/junit.xml --format testname -- -mod=vendor \
+	-covermode=atomic -coverprofile=.coverage/cover.out -p=1  ./internal/test/integration/github/...
+
+.PHONY: test-integration-openstack
+test-integration-openstack: $(SETUP_ENVTEST) $(GOTESTSUM)
+	@mkdir -p $(shell pwd)/.coverage
+	CREATE_KIND_CLUSTER=false KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GOTESTSUM) --junitfile=.coverage/junit.xml --format testname -- -mod=vendor \
+	-covermode=atomic -coverprofile=.coverage/cover.out -p=1  ./internal/test/integration/openstack/...
 
 ##@ Main Targets
 ################
@@ -565,8 +581,8 @@ boilerplate: generate-boilerplate ## Ensure that your files have a boilerplate h
 builder-image-push: ## Build $(CONTROLLER_SHORT)-builder to a new version. For more information see README.
 	BUILDER_IMAGE=$(BUILDER_IMAGE) ./hack/upgrade-builder-image.sh
 
-# .PHONY: test
-# test: test-unit test-integration ## Runs all unit and integration tests.
+.PHONY: test
+test: test-unit test-integration ## Runs all unit and integration tests.
 
 create-workload-cluster-openstack: $(ENVSUBST) $(KUBECTL)
 	cat .cluster.yaml | $(ENVSUBST) - | $(KUBECTL) apply -f -
