@@ -133,7 +133,7 @@ if settings.get("local_mode"):
     WORKDIR /
     COPY --from=helm --chown=root:root --chmod=755 /usr/bin/helm /usr/local/bin/helm
     COPY .tiltbuild/manager .
-    COPY .release/ /tmp/cluster-stacks/
+    COPY .release/ /tmp/downloads/cluster-stacks/
     """
 else:
     tilt_dockerfile_header_cspo = """
