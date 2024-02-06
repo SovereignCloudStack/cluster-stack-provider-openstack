@@ -187,7 +187,7 @@ def deploy_cspo():
             entrypoint = entrypoint,
             live_update = [
                 sync(".tiltbuild/manager", "/manager"),
-                sync(".release", "/tmp/cluster-stacks"),
+                sync(".release", "/tmp/downloads/cluster-stacks"),
             ],
             ignore = ["templates"],
         )
