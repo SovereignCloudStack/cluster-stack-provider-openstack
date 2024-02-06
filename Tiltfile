@@ -17,10 +17,11 @@ settings = {
     "allowed_contexts": [
         "kind-cspo",
     ],
+    "local_mode": True,
     "deploy_cert_manager": True,
     "preload_images_for_kind": True,
     "kind_cluster_name": "cspo",
-    "capi_version": "v1.5.2",
+    "capi_version": "v1.6.0",
     "cso_version": "v0.1.0-alpha.2",
     "capo_version": "v0.8.0",
     "cert_manager_version": "v1.13.1",
@@ -29,8 +30,8 @@ settings = {
 }
 
 # global settings
-settings.update(read_json(
-    "tilt-settings.json",
+settings.update(read_yaml(
+    "tilt-settings.yaml",
     default = {},
 ))
 
@@ -124,14 +125,25 @@ def fixup_yaml_empty_arrays(yaml_str):
     return yaml_str.replace("storedVersions: null", "storedVersions: []")
 
 ## This should have the same versions as the Dockerfile
-tilt_dockerfile_header_cspo = """
-FROM docker.io/alpine/helm:3.12.2 as helm
+if settings.get("local_mode"):
+    tilt_dockerfile_header_cspo = """
+    FROM docker.io/alpine/helm:3.12.2 as helm
 
-FROM docker.io/library/alpine:3.18.0 as tilt
-WORKDIR /
-COPY --from=helm --chown=root:root --chmod=755 /usr/bin/helm /usr/local/bin/helm
-COPY manager .
-"""
+    FROM docker.io/library/alpine:3.18.0 as tilt
+    WORKDIR /
+    COPY --from=helm --chown=root:root --chmod=755 /usr/bin/helm /usr/local/bin/helm
+    COPY .tiltbuild/manager .
+    COPY .release/ /tmp/cluster-stacks/
+    """
+else:
+    tilt_dockerfile_header_cspo = """
+    FROM docker.io/alpine/helm:3.12.2 as helm
+
+    FROM docker.io/library/alpine:3.18.0 as tilt
+    WORKDIR /
+    COPY --from=helm --chown=root:root --chmod=755 /usr/bin/helm /usr/local/bin/helm
+    COPY manager .
+    """
 
 
 # Build cspo and add feature gates
@@ -166,18 +178,31 @@ def deploy_cspo():
 
     # Set up an image build for the provider. The live update configuration syncs the output from the local_resource
     # build into the container.
-    docker_build_with_restart(
-        ref = "ghcr.io/sovereigncloudstack/cspo-staging",
-        context = "./.tiltbuild/",
-        dockerfile_contents = tilt_dockerfile_header_cspo,
-        target = "tilt",
-        entrypoint = entrypoint,
-        only = "manager",
-        live_update = [
-            sync(".tiltbuild/manager", "/manager"),
-        ],
-        ignore = ["templates"],
-    )
+    if settings.get("local_mode"):
+        docker_build_with_restart(
+            ref = "ghcr.io/sovereigncloudstack/cspo-staging",
+            context = ".",
+            dockerfile_contents = tilt_dockerfile_header_cspo,
+            target = "tilt",
+            entrypoint = entrypoint,
+            live_update = [
+                sync(".tiltbuild/manager", "/manager"),
+                sync(".release", "/tmp/cluster-stacks"),
+            ],
+            ignore = ["templates"],
+        )
+    else:
+        docker_build_with_restart(
+            ref = "ghcr.io/sovereigncloudstack/cspo-staging",
+            context = "./.tiltbuild/",
+            dockerfile_contents = tilt_dockerfile_header_cspo,
+            target = "tilt",
+            entrypoint = entrypoint,
+            live_update = [
+                sync(".tiltbuild/manager", "/manager"),
+            ],
+            ignore = ["templates"],
+        )
     k8s_yaml(blob(yaml))
     k8s_resource(workload = "cspo-controller-manager", labels = ["cspo"])
     k8s_resource(
