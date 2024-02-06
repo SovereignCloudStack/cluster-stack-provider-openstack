@@ -52,7 +52,7 @@ make delete-bootstrap-cluster
 If you have any trouble finding the right command, then you can use `make help` to get a list of all available make targets.
 
 ## Toggle between local_mode and remote mode 
-We can retrieve cluster-stacks in two modes. One way is to let the controller fetch it from GitHub which is remote mode and other is we mount the cluster-stacks inside the container and start the controller with appropriate flag. 
+We can retrieve cluster-stacks in two modes. One way is to let the controller fetch it from GitHub which is remote mode and other is we mount the cluster-stacks inside the container at `/tmp/downloads/cluster-stacks` directory. 
 
 > [!NOTE]  
 > Using remote mode is the default behavior. 
@@ -89,3 +89,5 @@ $ tree .release/openstack-scs-1-27-v1/
 
 > [!IMPORTANT]
 There's an alternative way to get clusterstacks using [csmctl](https://github.com/sovereigncloudstack/csmctl). You can follow the README of csmctl for specific instructions and a good quickstart.
+
+You can use `csmctl create` subcommand to create clusterstack locally. You'll need a csmctl.yaml file in the cluster-stack configuration directory. Please read more about creating configuration file for csmctl in the csmctl docs. 
