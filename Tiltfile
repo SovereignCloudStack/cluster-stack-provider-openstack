@@ -17,7 +17,7 @@ settings = {
     "allowed_contexts": [
         "kind-cspo",
     ],
-    "local_mode": True,
+    "local_mode": False,
     "deploy_cert_manager": True,
     "preload_images_for_kind": True,
     "kind_cluster_name": "cspo",
