@@ -79,7 +79,7 @@ var _ = Describe("OpenStackClusterStackReleaseReconciler", func() {
 			}, timeout, interval).Should(BeNil())
 		})
 
-		It("sets OpenStackClusterStackReleaseDownloaded condition once OpenStackClusterStackRelease object is created", func() {
+		It("sets ClusterStackReleaseAssetsReadyCondition condition once OpenStackClusterStackRelease object is created", func() {
 			Eventually(func() bool {
 				var openStackClusterStackRelease cspov1alpha1.OpenStackClusterStackRelease
 				return utils.IsPresentAndTrue(ctx, testEnv.Client, openstackClusterStackReleaseKey, &openStackClusterStackRelease, cspov1alpha1.ClusterStackReleaseAssetsReadyCondition)
