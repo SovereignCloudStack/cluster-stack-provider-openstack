@@ -41,7 +41,7 @@ var _ = Describe("OpenStackClusterStackReleaseReconciler", func() {
 			testNs, err = testEnv.CreateNamespace(ctx, "oscsr-integration")
 			Expect(err).NotTo(HaveOccurred())
 
-			openstackClusterStackReleaseKey = types.NamespacedName{Name: "openstack-ferrol-1-27-v1", Namespace: testNs.Name}
+			openstackClusterStackReleaseKey = types.NamespacedName{Name: "openstack-scs-1-27-v2", Namespace: testNs.Name}
 
 			openStackClusterStackRelease = &cspov1alpha1.OpenStackClusterStackRelease{
 				TypeMeta: metav1.TypeMeta{
@@ -49,11 +49,11 @@ var _ = Describe("OpenStackClusterStackReleaseReconciler", func() {
 					APIVersion: "infrastructure.clusterstack.x-k8s.io",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "openstack-ferrol-1-27-v1",
+					Name:      "openstack-scs-1-27-v2",
 					Namespace: testNs.Name,
 				},
 				Spec: cspov1alpha1.OpenStackClusterStackReleaseSpec{
-					CloudName: "openstack",
+					CloudName: "capi-openstack-scs-1-27-v2",
 					IdentityRef: &apiv1alpha7.OpenStackIdentityReference{
 						Kind: "Secret",
 						Name: "supersecret",
@@ -72,7 +72,7 @@ var _ = Describe("OpenStackClusterStackReleaseReconciler", func() {
 		})
 
 		It("creates the OpenStackNodeImageRelease object", func() {
-			openstackNodeImageReleaseName := types.NamespacedName{Name: "openstack-ferrol-1-27-ubuntu-capi-image-v1.27.5-v1", Namespace: testNs.Name}
+			openstackNodeImageReleaseName := types.NamespacedName{Name: "openstack-scs-1-27-ubuntu-capi-image-v1.27.5-v2", Namespace: testNs.Name}
 			Eventually(func() error {
 				var openStackNodeImageRelease cspov1alpha1.OpenStackNodeImageRelease
 				return testEnv.Get(ctx, openstackNodeImageReleaseName, &openStackNodeImageRelease)
