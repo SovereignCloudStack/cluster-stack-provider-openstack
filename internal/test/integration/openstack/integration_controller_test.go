@@ -101,7 +101,7 @@ var _ = Describe("Test", func() {
 			}, timeout, interval).Should(BeTrue())
 		})
 
-		It("sets OpenStackNodeImageReleases Status ready after node image is created and active", func() {
+		It("sets OpenStackNodeImageRelease Status ready after node image is created and active", func() {
 			Eventually(func() bool {
 				openstackNodeImageReleaseName := types.NamespacedName{Name: "openstack-integration-1-27-ubuntu-test-image-v1.27.8-v2", Namespace: testNs.Name}
 				if err := testEnv.Get(ctx, openstackNodeImageReleaseName, &openStackNodeImageRelease); err == nil {
