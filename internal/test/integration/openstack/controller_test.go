@@ -31,7 +31,7 @@ import (
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
-var _ = Describe("Test", func() {
+var _ = Describe("OpenStackNodeImageReleaseReconciler", func() {
 	Context("test", func() {
 		var (
 			openStackClusterStackRelease *cspov1alpha1.OpenStackClusterStackRelease

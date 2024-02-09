@@ -20,20 +20,15 @@ package helpers
 import (
 	"context"
 	"fmt"
-	"os"
 	"path"
 	"path/filepath"
 	goruntime "runtime"
-	"strconv"
-	"strings"
-	"time"
 
 	githubclient "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client"
 	githubmocks "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client/mocks"
 	g "github.com/onsi/ginkgo/v2"
 	cspov1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,13 +38,11 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/log"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	kind "sigs.k8s.io/kind/pkg/cluster"
 )
 
 func init() {
@@ -71,19 +64,12 @@ var (
 )
 
 const (
-	// DefaultKindClusterName is the name for workload kind cluster.
-	DefaultKindClusterName = "cspo-kind-workload-cluster"
-
 	// DefaultPodNamespace is default the namespace for the envtest resources.
 	DefaultPodNamespace = "cspo-system"
-
-	// defaultKindClusterNodeImage is default node image for kind cluster.
-	defaultKindClusterNodeImage = "kindest/node:v1.26.6@sha256:6e2d8b28a5b601defe327b98bd1c2d1930b49e5d8c512e1895099e4504007adb" //#nosec
 )
 
 func init() {
 	// Calculate the scheme.
-	utilruntime.Must(clusterv1.AddToScheme(scheme))
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(cspov1alpha1.AddToScheme(scheme))
 
@@ -100,7 +86,6 @@ func init() {
 		Scheme:                scheme,
 		ErrorIfCRDPathMissing: true,
 		CRDDirectoryPaths:     crdPaths,
-		CRDs:                  []*apiextensionsv1.CustomResourceDefinition{},
 	}
 }
 
@@ -109,10 +94,8 @@ type (
 	TestEnvironment struct {
 		ctrl.Manager
 		client.Client
-		KubeConfig          string
 		Config              *rest.Config
 		cancel              context.CancelFunc
-		kind                *kind.Provider
 		GitHubClientFactory githubclient.Factory
 		GitHubClient        *githubmocks.Client
 	}
@@ -155,30 +138,6 @@ func NewTestEnvironment() *TestEnvironment {
 		GitHubClient:        githubClient,
 	}
 
-	if ifCreateKind() {
-		// Create kind cluster
-		klog.Info("creating kind cluster")
-
-		cluster := kind.NewProvider(kind.ProviderWithDocker())
-		err = cluster.Create(
-			DefaultKindClusterName,
-			kind.CreateWithWaitForReady(time.Minute*2),
-			kind.CreateWithNodeImage(defaultKindClusterNodeImage),
-		)
-		if err != nil {
-			klog.Fatalf("unable to create kind cluster: %s", err)
-		}
-		klog.Infof("kind cluster created: %s", DefaultKindClusterName)
-
-		// Get kind cluster kubeconfig
-		testEnv.KubeConfig, err = cluster.KubeConfig(DefaultKindClusterName, false)
-		if err != nil {
-			klog.Fatalf("unable to get kubeconfig: %s", err)
-		}
-
-		testEnv.kind = cluster
-	}
-
 	return testEnv
 }
 
@@ -194,17 +153,6 @@ func (t *TestEnvironment) StartManager(ctx context.Context) error {
 
 // Stop stops the manager and cancels the context.
 func (t *TestEnvironment) Stop() error {
-	if ifCreateKind() {
-		klog.Info("Deleting kind cluster")
-		err := t.kind.Delete(DefaultKindClusterName, "./kubeconfig")
-		if err != nil {
-			if !strings.Contains(err.Error(), "failed to update kubeconfig:") {
-				klog.Errorf("unable to delete kind cluster: %s", err)
-			}
-		}
-		klog.Info("successfully deleted kind cluster")
-	}
-
 	t.cancel()
 	if err := env.Stop(); err != nil {
 		return fmt.Errorf("failed to stop environment; %w", err)
@@ -243,19 +191,4 @@ func (t *TestEnvironment) CreateNamespace(ctx context.Context, generateName stri
 	}
 
 	return ns, nil
-}
-
-// IfCreateKind returns that to create kind cluster or not.
-func ifCreateKind() bool {
-	createKind, ok := os.LookupEnv("CREATE_KIND_CLUSTER")
-	// default to true if not set
-	if createKind == "" || !ok {
-		createKind = "true"
-	}
-	ifCreate, err := strconv.ParseBool(createKind)
-	if err != nil {
-		klog.Fatalf("unable to parse CREATE_KIND_CLUSTER value: %s", err)
-	}
-
-	return ifCreate
 }
