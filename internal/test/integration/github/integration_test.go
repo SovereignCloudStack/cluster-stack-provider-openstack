@@ -71,7 +71,7 @@ var _ = Describe("OpenStackClusterStackReleaseReconciler", func() {
 			Expect(testEnv.Cleanup(ctx, testNs, openStackClusterStackRelease)).To(Succeed())
 		})
 
-		It("creates the OpenStackNodeImageReleases object", func() {
+		It("creates the OpenStackNodeImageRelease object", func() {
 			openstackNodeImageReleaseName := types.NamespacedName{Name: "openstack-ferrol-1-27-ubuntu-capi-image-v1.27.5-v1", Namespace: testNs.Name}
 			Eventually(func() error {
 				var openStackNodeImageRelease cspov1alpha1.OpenStackNodeImageRelease
