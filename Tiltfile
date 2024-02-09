@@ -86,12 +86,10 @@ else:
 
 def deploy_cso():
     # yaml = str(kustomizesub("./hack/observability")) # build an observable kind deployment by default
-    yaml_cso = './cso-components.yaml'
-    local_resource(
-        name = "cso-components",
-        cmd = ["sh", "-ec", sed_cmd, yaml_cso, "|", envsubst_cmd],
-        labels = ["CSO"],
-    )
+    version = settings.get("cso_version")
+    cso_uri = "https://github.com/sovereignCloudStack/cluster-stack-operator/releases/download/{}/cso-infrastructure-components.yaml".format(version)
+    cmd = "curl -sSL {} | {} | kubectl apply -f -".format(cso_uri, envsubst_cmd)
+    yaml_cso = str(local(cmd, quiet = True))
 
     entrypoint = ["/manager"]
     extra_args = settings.get("extra_args")
@@ -102,7 +100,7 @@ def deploy_cso():
     # build into the container.
     if settings.get("local_mode"):
         docker_build_with_restart(
-            ref = "ghcr.io/sovereigncloudstack/cso-staging",
+            ref = "ghcr.io/sovereigncloudstack/cso",
             context = ".",
             dockerfile_contents = tilt_dockerfile_header_cso,
             target = "tilt",
@@ -112,39 +110,6 @@ def deploy_cso():
             ],
             ignore = ["templates"],
         )
-    else:
-        docker_build_with_restart(
-            ref = "ghcr.io/sovereigncloudstack/cso-staging",
-            context = ".",
-            dockerfile_contents = tilt_dockerfile_header_cso,
-            target = "tilt",
-            entrypoint = entrypoint,
-            live_update = [
-                sync("cso-components.yaml", "/cso-components.yaml"),
-            ],
-            ignore = ["templates"],
-        )
-
-    k8s_yaml(yaml_cso)
-    k8s_resource(workload = "cso-controller-manager", labels = ["CSO"])
-    k8s_resource(
-        objects = [
-            "cso-system:namespace",
-            "clusteraddons.clusterstack.x-k8s.io:customresourcedefinition",
-            "clusterstackreleases.clusterstack.x-k8s.io:customresourcedefinition",
-            "clusterstacks.clusterstack.x-k8s.io:customresourcedefinition",
-            "cso-controller-manager:serviceaccount",
-            "cso-leader-election-role:role",
-            "cso-manager-role:clusterrole",
-            "cso-leader-election-rolebinding:rolebinding",
-            "cso-manager-rolebinding:clusterrolebinding",
-            "cso-serving-cert:certificate",
-            "cso-selfsigned-issuer:issuer",
-            "cso-validating-webhook-configuration:validatingwebhookconfiguration",
-        ],
-        new_name = "cso-misc",
-        labels = ["CSO"],
-    )
 
 def deploy_capo():
     version = settings.get("capo_version")
