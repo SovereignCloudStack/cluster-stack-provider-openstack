@@ -111,7 +111,7 @@ var _ = Describe("Test", func() {
 			}, timeout, interval).Should(BeTrue())
 		})
 
-		It("sets OpenStackClusterStackRelease Status ready after OpenStackNodeImageReleases is ready", func() {
+		It("sets OpenStackClusterStackRelease Status ready after OpenStackNodeImageRelease is ready", func() {
 			Eventually(func() bool {
 				openStackClusterStackReleaseName := types.NamespacedName{Name: testClusterStackName, Namespace: testNs.Name}
 				if err := testEnv.Get(ctx, openStackClusterStackReleaseName, openStackClusterStackRelease); err == nil {
