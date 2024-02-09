@@ -87,7 +87,7 @@ var _ = Describe("Test", func() {
 			Expect(testEnv.Cleanup(ctx, testNs, openStackClusterStackRelease)).To(Succeed())
 		})
 
-		It("creates the OpenStackNodeImageReleases object", func() {
+		It("creates the OpenStackNodeImageRelease object", func() {
 			openstackNodeImageReleaseName := types.NamespacedName{Name: "openstack-integration-1-27-ubuntu-test-image-v1.27.8-v2", Namespace: testNs.Name}
 			Eventually(func() error {
 				return testEnv.Get(ctx, openstackNodeImageReleaseName, &openStackNodeImageRelease)
