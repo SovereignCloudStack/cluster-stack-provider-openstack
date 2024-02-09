@@ -38,7 +38,7 @@ var _ = Describe("OpenStackClusterStackReleaseReconciler", func() {
 
 		BeforeEach(func() {
 			var err error
-			testNs, err = testEnv.CreateNamespace(ctx, "ocsr-integration")
+			testNs, err = testEnv.CreateNamespace(ctx, "oscsr-integration")
 			Expect(err).NotTo(HaveOccurred())
 
 			openstackClusterStackReleaseKey = types.NamespacedName{Name: "openstack-ferrol-1-27-v1", Namespace: testNs.Name}
