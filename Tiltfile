@@ -89,7 +89,7 @@ def deploy_cso():
     version = settings.get("cso_version")
     cso_uri = "https://github.com/sovereignCloudStack/cluster-stack-operator/releases/download/{}/cso-infrastructure-components.yaml".format(version)
     cmd = "curl -sSL {} | {} | kubectl apply -f -".format(cso_uri, envsubst_cmd)
-    yaml_cso = str(local(cmd, quiet = True))
+    local(cmd, quiet = True)
 
     entrypoint = ["/manager"]
     extra_args = settings.get("extra_args")
