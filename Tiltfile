@@ -204,8 +204,11 @@ def create_secret():
     local_resource('supersecret', cmd, labels=["clouds-yaml-secret"])    
 
 def cspo_template():
-    cmd = "cat .cspotemplate.yaml | {} | kubectl apply -f -".format(envsubst_cmd)
-    local_resource('cspotemplate', cmd, labels=["cspo-template"])  
+    cmd = "cat .cspotemplate.yaml | {}".format(envsubst_cmd)
+    cspo_yaml = local(cmd, quiet=True)
+    k8s_yaml(cspo_yaml)
+    k8s_resource(objects = ["cspotemplate:openstackclusterstackreleasetemplate"], new_name = "cspotemplate", labels = ["cspo-template"])
+
 
 def clusterstack():
     k8s_resource(objects = ["clusterstack:clusterstack"], new_name = "clusterstack", labels = ["clusterstack"])
