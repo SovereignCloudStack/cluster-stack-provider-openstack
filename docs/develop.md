@@ -24,7 +24,7 @@ make tilt-up
 
 > To access the Tilt UI please go to: `http://localhost:10351`
 
-You should make sure that everything in the UI looks green. If not, you can trigger the Tilt workflow again. In the case of the `cspotemplate`, this might be necessary, as it cannot be applied right after the startup of the cluster and fails. Tilt unfortunately does not include a waiting period.
+You should make sure that everything in the UI looks green. If not, you can trigger the Tilt workflow again.
 
 If everything is green, then you can already check for your clusterstack that has been deployed. You can use a tool like k9s to have a look at the management cluster and its custom resources.
 
