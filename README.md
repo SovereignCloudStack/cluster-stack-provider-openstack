@@ -144,6 +144,7 @@ kubectl --kubeconfig kubeconfig.yaml get nodes
 |                         | CSO `v0.1.0-alpha.2` |
 | ----------------------- | -------------------- |
 | CSPO `v0.1.0-alpha.rc1` | ✓ |
+| CSPO `v0.1.0-alpha.1`   | ✓ |
 
 # Development guide
 
