@@ -20,7 +20,6 @@ Note that it is a common practice to create a temporary, local [bootstrap cluste
 
 - Install [Docker] and [kind]
 - Install [kubectl]
-- Install [Helm]
 - Install [clusterctl]
 - Install [go]  # installation of the Go package `envsubst` is required to enable the expansion of variables specified in CSPO and CSO manifests.
 
@@ -165,7 +164,6 @@ CSPO currently exposes the following APIs:
 
 <!-- links -->
 [Docker]: https://www.docker.com/
-[Helm]: https://helm.sh/docs/intro/install/
 [kind]: https://kind.sigs.k8s.io/
 [kubectl]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [clusterctl]: https://cluster-api.sigs.k8s.io/user/quick-start.html#install-clusterctl

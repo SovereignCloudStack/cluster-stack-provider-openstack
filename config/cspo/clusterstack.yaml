@@ -5,7 +5,7 @@ metadata:
   namespace: cluster
 spec:
   provider: openstack
-  name: ferrol
+  name: scs
   kubernetesVersion: "1.27"
   channel: stable
   autoSubscribe: false
@@ -14,4 +14,4 @@ spec:
     kind: OpenStackClusterStackReleaseTemplate
     name: cspotemplate
   versions:
-    - v1
+    - v2
