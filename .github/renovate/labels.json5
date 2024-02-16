@@ -13,10 +13,6 @@
         "labels": ["type/patch"]
       },
       {
-        "matchDatasources": ["helm"],
-        "addLabels": ["update/helm"]
-      },
-      {
         "matchDatasources": ["docker"],
         "addLabels": ["update/container"]
       },
