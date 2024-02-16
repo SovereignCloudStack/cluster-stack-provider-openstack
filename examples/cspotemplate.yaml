@@ -5,7 +5,8 @@ metadata:
 spec:
   template:
     spec:
-      cloudName: <name of the cloud to use from the clouds secret>
+    # Field identityRef is optional and its default values ​​are as follows:
+    # identityRef.kind: "Secret", identityRef.name: "openstack"
       identityRef:
         kind: Secret
         name: <my-secret>

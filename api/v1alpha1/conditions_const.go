@@ -48,6 +48,9 @@ const (
 )
 
 const (
+	// CloudNameAvailableCondition is used when cloud name is available.
+	CloudNameAvailableCondition = "CloudNameAvailable"
+
 	// CloudAvailableCondition is used when cloud is available.
 	CloudAvailableCondition = "CloudAvailable"
 

@@ -5,8 +5,9 @@ metadata:
   namespace: cluster
 spec:
   template:
-    spec:
-      cloudName: "${CLOUD_NAME}"
-      identityRef:
-        kind: Secret
-        name: "${SECRET_NAME}"
+    spec: {}
+    # Field identityRef is optional and its default values ​​are as follows:
+    # identityRef.kind: "Secret", identityRef.name: "openstack"
+      # identityRef:
+      #   kind: Secret
+      #   name: "<your-secret-name>"

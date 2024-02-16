@@ -52,12 +52,10 @@ spec:
             description: OpenStackClusterStackReleaseSpec defines the desired state
               of OpenStackClusterStackRelease.
             properties:
-              cloudName:
-                description: CloudName is the name of the cloud to use from the cloud's
-                  secret.
-                minLength: 1
-                type: string
               identityRef:
+                default:
+                  kind: Secret
+                  name: openstack
                 description: IdentityRef is a reference to a identity to be used when
                   reconciling this cluster
                 properties:
@@ -75,9 +73,6 @@ spec:
                 - kind
                 - name
                 type: object
-            required:
-            - cloudName
-            - identityRef
             type: object
           status:
             description: OpenStackClusterStackReleaseStatus defines the observed state
