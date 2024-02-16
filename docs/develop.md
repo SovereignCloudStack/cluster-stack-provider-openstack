@@ -24,11 +24,16 @@ make tilt-up
 
 > To access the Tilt UI please go to: `http://localhost:10351`
 
-You should make sure that everything in the UI looks green. If not, you can trigger the Tilt workflow again. In the case of the `cspotemplate`, this might be necessary, as it cannot be applied right after the startup of the cluster and fails. Tilt unfortunately does not include a waiting period.
+You should make sure that everything in the UI looks green. If not, you can trigger the Tilt workflow again.
 
-If everything is green, then you can already check for your clusterstack that has been deployed. You can use a tool like k9s to have a look at the management cluster and its custom resources.
+### Applying ClusterStack
 
-In case your clusterstack shows that it is ready, you can deploy a workload cluster. This could be done through the Tilt UI, by pressing the button in the top right corner `Create Workload Cluster`. This triggers the `make create-workload-cluster-openstack`, which uses the environment variables and the cluster-template.
+When you start your tilt setup then the ClusterStack manifest gets copied from `config/cspo` directory to root of your repository. In order to apply the ClusterStack to the running local development cluster, you can click on the tilt UI. There should a click on the top-right hand side that is named as `apply-clusterstack` if you hover over it. 
+Once the ClusterStack is applied wait for the ClusterStack and ClusterStackRelease object to be ready. In case your ClusterStack shows that it is ready, you can deploy a workload cluster. 
+
+### Creating workload cluster
+
+This could be done through the Tilt UI, by pressing the button in the top right corner `Create Workload Cluster`. This triggers the `make create-workload-cluster-openstack`, which uses the environment variables and the cluster-template.
 
 To interact with your freshly created workload cluster, you can use these commands:
 
@@ -40,6 +45,8 @@ export KUBECONFIG=$PWD/.workload-cluster-kubeconfig.yaml
 In case you want to change some code, you can do so and see that Tilt triggers on save. It will update the container of the operator automatically.
 
 If you want to change something in your ClusterStack or Cluster custom resources, you can have a look at `.cluster.yaml` and `.clusterstack.yaml`, which Tilt uses.
+
+To delete the ClusterStack you can click on the `delete-clusterstack` button in the tilt UI.
 
 To tear down the workload cluster, click on the `Delete Workload Cluster` button in the top right corner of the Tilt UI. This action triggers the execution of `make delete-workload-cluster-openstack`. After a few minutes, the resources should be successfully deleted.
 
@@ -97,4 +104,4 @@ $ tree .release/openstack-scs-1-27-v1/
 > [!IMPORTANT]
 There's an alternative way to get clusterstacks using [csmctl](https://github.com/sovereigncloudstack/csmctl). You can follow the README of csmctl for specific instructions and a good quickstart.
 
-You can use `csmctl create` subcommand to create clusterstack locally. You'll need a csmctl.yaml file in the cluster-stack configuration directory. Please read more about creating configuration file for csmctl in the csmctl docs.
+You can use `csmctl create` subcommand to create clusterstack locally. You'll need a csmctl.yaml file in the cluster-stack configuration directory. Please read more about creating configuration file for csmctl in the csmctl docs. 

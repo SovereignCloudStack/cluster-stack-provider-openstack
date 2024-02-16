@@ -584,11 +584,17 @@ builder-image-push: ## Build $(CONTROLLER_SHORT)-builder to a new version. For m
 .PHONY: test
 test: test-unit test-integration ## Runs all unit and integration tests.
 
-create-workload-cluster-openstack: $(ENVSUBST) $(KUBECTL)
+apply-workload-cluster-openstack: $(ENVSUBST) $(KUBECTL)
 	cat .cluster.yaml | $(ENVSUBST) - | $(KUBECTL) apply -f -
 
 delete-workload-cluster-openstack: $(ENVSUBST) $(KUBECTL)
 	cat .cluster.yaml | $(ENVSUBST) - | $(KUBECTL) delete -f -
+
+apply-clusterstack: $(ENVSUBST) $(KUBECTL)
+	cat .clusterstack.yaml | $(ENVSUBST) - | $(KUBECTL) apply -f -
+
+delete-clusterstack: $(ENVSUBST) $(KUBECTL)
+	cat .clusterstack.yaml | $(ENVSUBST) - | $(KUBECTL) delete -f -
 
 get-kubeconfig-workload-cluster:
 	./hack/get-kubeconfig-of-workload-cluster.sh
