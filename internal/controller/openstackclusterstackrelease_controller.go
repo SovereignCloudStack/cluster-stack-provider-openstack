@@ -123,12 +123,6 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 	if download {
 		conditions.MarkFalse(openstackclusterstackrelease, apiv1alpha1.ClusterStackReleaseAssetsReadyCondition, apiv1alpha1.ReleaseAssetsNotDownloadedYetReason, clusterv1beta1.ConditionSeverityInfo, "assets not downloaded yet")
 
-		// this is the point where we download the release from github
-		// acquire lock so that only one reconcile loop can download the release
-		r.openStackClusterStackRelDownloadDirectoryMutex.Lock()
-
-		defer r.openStackClusterStackRelDownloadDirectoryMutex.Unlock()
-
 		gc, err := r.GitHubClientFactory.NewClient(ctx)
 		if err != nil {
 			conditions.MarkFalse(openstackclusterstackrelease,
@@ -143,6 +137,12 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 		}
 
 		conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.GitAPIAvailableCondition)
+
+		// this is the point where we download the release from github
+		// acquire lock so that only one reconcile loop can download the release
+		r.openStackClusterStackRelDownloadDirectoryMutex.Lock()
+
+		defer r.openStackClusterStackRelDownloadDirectoryMutex.Unlock()
 
 		if err := downloadReleaseAssets(ctx, releaseTag, releaseAssets.LocalDownloadPath, gc); err != nil {
 			logger.Error(err, "failed to download release assets")
