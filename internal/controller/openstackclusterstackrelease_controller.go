@@ -104,21 +104,6 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 		}
 	}()
 
-	gc, err := r.GitHubClientFactory.NewClient(ctx)
-	if err != nil {
-		conditions.MarkFalse(openstackclusterstackrelease,
-			apiv1alpha1.GitAPIAvailableCondition,
-			apiv1alpha1.GitTokenOrEnvVariableNotSetReason,
-			clusterv1beta1.ConditionSeverityError,
-			err.Error(),
-		)
-		record.Warnf(openstackclusterstackrelease, "GitTokenOrEnvVariableNotSet", err.Error())
-		logger.Error(err, "failed to create Github client")
-		return ctrl.Result{}, nil
-	}
-
-	conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.GitAPIAvailableCondition)
-
 	// name of OpenStackClusterStackRelease object is same as the release tag
 	releaseTag := openstackclusterstackrelease.Name
 
@@ -138,16 +123,31 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 	if download {
 		conditions.MarkFalse(openstackclusterstackrelease, apiv1alpha1.ClusterStackReleaseAssetsReadyCondition, apiv1alpha1.ReleaseAssetsNotDownloadedYetReason, clusterv1beta1.ConditionSeverityInfo, "assets not downloaded yet")
 
+		gc, err := r.GitHubClientFactory.NewClient(ctx)
+		if err != nil {
+			conditions.MarkFalse(openstackclusterstackrelease,
+				apiv1alpha1.GitAPIAvailableCondition,
+				apiv1alpha1.GitTokenOrEnvVariableNotSetReason,
+				clusterv1beta1.ConditionSeverityError,
+				err.Error(),
+			)
+			record.Warnf(openstackclusterstackrelease, "GitTokenOrEnvVariableNotSet", err.Error())
+			logger.Error(err, "failed to create Github client")
+			return ctrl.Result{}, nil
+		}
+
+		conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.GitAPIAvailableCondition)
+
 		// this is the point where we download the release from github
 		// acquire lock so that only one reconcile loop can download the release
 		r.openStackClusterStackRelDownloadDirectoryMutex.Lock()
+
+		defer r.openStackClusterStackRelDownloadDirectoryMutex.Unlock()
 
 		if err := downloadReleaseAssets(ctx, releaseTag, releaseAssets.LocalDownloadPath, gc); err != nil {
 			logger.Error(err, "failed to download release assets")
 			return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 		}
-
-		r.openStackClusterStackRelDownloadDirectoryMutex.Unlock()
 
 		record.Eventf(openstackclusterstackrelease, "ClusterStackReleaseAssetsReady", "successfully downloaded ClusterStackReleaseAssets %q", releaseTag)
 		// requeue to make sure release assets can be accessed
