@@ -3,7 +3,7 @@ module github.com/sovereignCloudStack/cluster-stack-provider-openstack
 go 1.21
 
 require (
-	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.2
+	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.3
 	github.com/google/go-github/v52 v52.0.0
 	github.com/gophercloud/gophercloud v1.9.0
 	github.com/gophercloud/utils v0.0.0-20231010081019-80377eca5d56
@@ -16,7 +16,7 @@ require (
 	k8s.io/klog/v2 v2.100.1
 	sigs.k8s.io/cluster-api v1.6.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.9.0
-	sigs.k8s.io/controller-runtime v0.16.3
+	sigs.k8s.io/controller-runtime v0.16.5
 	sigs.k8s.io/yaml v1.4.0
 )
 
