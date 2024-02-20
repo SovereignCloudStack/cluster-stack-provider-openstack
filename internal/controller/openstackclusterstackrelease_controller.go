@@ -192,7 +192,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 			conditions.MarkFalse(openstackclusterstackrelease,
 				apiv1alpha1.CloudNameAvailableCondition,
 				apiv1alpha1.IssueWithSecretReason,
-				clusterv1beta1.ConditionSeverityError,
+				clusterv1beta1.ConditionSeverityWarning,
 				err.Error(),
 			)
 			record.Warnf(openstackclusterstackrelease, "IssueWithSecret", err.Error())
