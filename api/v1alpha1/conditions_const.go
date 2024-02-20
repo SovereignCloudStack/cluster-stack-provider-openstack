@@ -59,6 +59,9 @@ const (
 
 	// SecretNotFoundReason is used when the secret specified by the user is not found.
 	SecretNotFoundReason = "SecretNotFound"
+
+	// IssueWithSecretReason is used when getting the key-value pair from the secret failed.
+	IssueWithSecretReason = "IssueWithSecret"
 )
 
 const (

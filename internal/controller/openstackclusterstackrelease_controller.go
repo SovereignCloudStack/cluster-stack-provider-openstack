@@ -189,7 +189,17 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 				logger.Error(err, "failed to get secret")
 				return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 			}
+			conditions.MarkFalse(openstackclusterstackrelease,
+				apiv1alpha1.CloudNameAvailableCondition,
+				apiv1alpha1.IssueWithSecretReason,
+				clusterv1beta1.ConditionSeverityError,
+				err.Error(),
+			)
+			record.Warnf(openstackclusterstackrelease, "IssueWithSecret", err.Error())
+			return ctrl.Result{}, fmt.Errorf("failed to get cloud name from secret: %w", err)
 		}
+
+		conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.CloudNameAvailableCondition)
 
 		if err := r.createOrUpdateOpenStackNodeImageRelease(ctx, openstackclusterstackrelease, osnirName, cloudName, openStackNodeImage, ownerRef); err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to create or update OpenStackNodeImageRelease %s/%s: %w", openstackclusterstackrelease.Namespace, osnirName, err)
