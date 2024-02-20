@@ -24,7 +24,7 @@ make tilt-up
 
 > To access the Tilt UI please go to: `http://localhost:10351`
 
-You should make sure that everything in the UI looks green. If not, you can trigger the Tilt workflow again.
+You should make sure that everything in the UI looks green. If not, you can trigger the Tilt workflow again. In the case of the `cspotemplate`, this might be necessary, as it cannot be applied right after the startup of the cluster and fails. Tilt unfortunately does not include a waiting period.
 
 If everything is green, then you can already check for your clusterstack that has been deployed. You can use a tool like k9s to have a look at the management cluster and its custom resources.
 
@@ -50,3 +50,44 @@ make delete-bootstrap-cluster
 ```
 
 If you have any trouble finding the right command, then you can use `make help` to get a list of all available make targets.
+
+## Toggle between local_mode and remote mode 
+We can retrieve cluster-stacks in two modes. One way is to let the controller fetch it from GitHub which is remote mode and other is we mount the cluster-stacks inside the container at `/tmp/downloads/cluster-stacks` directory. 
+
+> [!NOTE]  
+> Using remote mode is the default behavior. 
+
+Switching between both modes is relatively simple if you're using Tilt. There is a file at the root of the repo `tilt-settings.yaml.example`
+Make a copy of that file with the name of `tilt-settings.yaml`
+```bash
+cp tilt-settings.yaml.example tilt-settings.yaml
+```
+Now, open the file and set the `local_mode` to `true` to use cluster-stacks in local_mode. It should look the following content wise.
+```yaml
+local_mode: true
+```
+
+> [!NOTE]
+> In this mode you need to have cluster-stacks present locally. 
+
+Downloading cluster-stacks can be achieved by many ways but below is a simple way to download it quickly. 
+```bash
+mkdir -p .release/openstack-scs-1-27-v1/
+cd .release/openstack-scs-1-27-v1
+gh release download --repo sovereigncloudstack/cluster-stacks openstack-scs-1-27-v1
+```
+Change the repo and tag as per the requirement. You can also download it directly from browser and move it to `.release` directory.
+
+Please make sure the directory structure remains the same otherwise you'll not be able to start the tilt setup. Here's an example of structuring `openstack-scs-1-27-v1` cluster-stack.
+```bash
+$ tree .release/openstack-scs-1-27-v1/
+.release/openstack-scs-1-27-v1/
+├── clusterstack.yaml
+├── metadata.yaml
+└── openstack-scs-1-27-cluster-class-v1.tgz
+```
+
+> [!IMPORTANT]
+There's an alternative way to get clusterstacks using [csmctl](https://github.com/sovereigncloudstack/csmctl). You can follow the README of csmctl for specific instructions and a good quickstart.
+
+You can use `csmctl create` subcommand to create clusterstack locally. You'll need a csmctl.yaml file in the cluster-stack configuration directory. Please read more about creating configuration file for csmctl in the csmctl docs. 

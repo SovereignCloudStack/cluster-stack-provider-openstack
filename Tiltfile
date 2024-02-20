@@ -17,11 +17,12 @@ settings = {
     "allowed_contexts": [
         "kind-cspo",
     ],
+    "local_mode": False,
     "deploy_cert_manager": True,
     "preload_images_for_kind": True,
     "kind_cluster_name": "cspo",
-    "capi_version": "v1.5.2",
-    "cso_version": "v0.1.0-alpha.2",
+    "capi_version": "v1.6.0",
+    "cso_version": "v0.1.0-alpha.3",
     "capo_version": "v0.8.0",
     "cert_manager_version": "v1.13.1",
     "kustomize_substitutions": {
@@ -29,8 +30,8 @@ settings = {
 }
 
 # global settings
-settings.update(read_json(
-    "tilt-settings.json",
+settings.update(read_yaml(
+    "tilt-settings.yaml",
     default = {},
 ))
 
@@ -61,11 +62,61 @@ def deploy_capi():
             if kb_extra_args:
                 patch_args_with_extra_args("capi-kubeadm-bootstrap-system", "capi-kubeadm-bootstrap-controller-manager", kb_extra_args)
 
+tilt_dockerfile_header_cso = """
+FROM ghcr.io/sovereigncloudstack/cso:{} as builder
+
+FROM docker.io/library/alpine:3.18.0 as tilt
+WORKDIR /
+COPY --from=builder /usr/local/bin/helm /usr/local/bin/helm
+COPY --from=builder /manager /manager
+COPY .release/ /tmp/downloads/cluster-stacks/
+COPY local_cso.yaml /local_cso.yaml
+""".format(settings.get("cso_version"))
+
 def deploy_cso():
     version = settings.get("cso_version")
     cso_uri = "https://github.com/sovereignCloudStack/cluster-stack-operator/releases/download/{}/cso-infrastructure-components.yaml".format(version)
     cmd = "curl -sSL {} | {} | kubectl apply -f -".format(cso_uri, envsubst_cmd)
     local(cmd, quiet = True)
+
+def deploy_local_cso():
+    yaml_cso = './local_cso.yaml'
+
+    entrypoint = ["/manager"]
+    extra_args = settings.get("extra_args")
+    if extra_args:
+        entrypoint.extend(extra_args)
+
+    docker_build_with_restart(
+        ref = "ghcr.io/sovereigncloudstack/cso-test",
+        context = ".",
+        dockerfile_contents = tilt_dockerfile_header_cso,
+        target = "tilt",
+        entrypoint = entrypoint,
+        live_update = [
+            sync("./local_cso.yaml", "/local_cso.yaml"), # reload when we change the manifest
+            sync("./.release", "/tmp/downloads/cluster-stacks"),
+        ],
+    )
+    k8s_yaml(yaml_cso)
+    k8s_resource(workload = "cso-controller-manager", labels = ["CSO"])
+    k8s_resource(
+        objects = [
+            "cso-system:namespace",
+            "clusteraddons.clusterstack.x-k8s.io:customresourcedefinition",
+            "clusterstackreleases.clusterstack.x-k8s.io:customresourcedefinition",
+            "clusterstacks.clusterstack.x-k8s.io:customresourcedefinition",
+            "cso-controller-manager:serviceaccount",
+            "cso-leader-election-role:role",
+            "cso-manager-role:clusterrole",
+            "cso-leader-election-rolebinding:rolebinding",
+            "cso-manager-rolebinding:clusterrolebinding",
+            "cso-serving-cert:certificate",
+            "cso-selfsigned-issuer:issuer",
+        ],
+        new_name = "cso-misc",
+        labels = ["CSO"],
+    )
 
 def deploy_capo():
     version = settings.get("capo_version")
@@ -124,14 +175,19 @@ def fixup_yaml_empty_arrays(yaml_str):
     return yaml_str.replace("storedVersions: null", "storedVersions: []")
 
 ## This should have the same versions as the Dockerfile
-tilt_dockerfile_header_cspo = """
-FROM docker.io/alpine/helm:3.12.2 as helm
-
-FROM docker.io/library/alpine:3.18.0 as tilt
-WORKDIR /
-COPY --from=helm --chown=root:root --chmod=755 /usr/bin/helm /usr/local/bin/helm
-COPY manager .
-"""
+if settings.get("local_mode"):
+    tilt_dockerfile_header_cspo = """
+    FROM docker.io/library/alpine:3.18.0 as tilt
+    WORKDIR /
+    COPY .tiltbuild/manager .
+    COPY .release/ /tmp/downloads/cluster-stacks/
+    """
+else:
+    tilt_dockerfile_header_cspo = """
+    FROM docker.io/library/alpine:3.18.0 as tilt
+    WORKDIR /
+    COPY manager .
+    """
 
 
 # Build cspo and add feature gates
@@ -164,36 +220,47 @@ def deploy_cspo():
     if extra_args:
         entrypoint.extend(extra_args)
 
-    # Set up an image build for the provider. The live update configuration syncs the output from the local_resource
-    # build into the container.
-    docker_build_with_restart(
-        ref = "ghcr.io/sovereigncloudstack/cspo-staging",
-        context = "./.tiltbuild/",
-        dockerfile_contents = tilt_dockerfile_header_cspo,
-        target = "tilt",
-        entrypoint = entrypoint,
-        only = "manager",
-        live_update = [
-            sync(".tiltbuild/manager", "/manager"),
-        ],
-        ignore = ["templates"],
-    )
+    if settings.get("local_mode"):
+        docker_build_with_restart(
+            ref = "ghcr.io/sovereigncloudstack/cspo-staging",
+            context = ".",
+            dockerfile_contents = tilt_dockerfile_header_cspo,
+            target = "tilt",
+            entrypoint = entrypoint,
+            live_update = [
+                sync(".tiltbuild/manager", "/manager"),
+                sync(".release", "/tmp/downloads/cluster-stacks"),
+            ],
+            ignore = ["templates"],
+        )
+    else:
+        docker_build_with_restart(
+            ref = "ghcr.io/sovereigncloudstack/cspo-staging",
+            context = "./.tiltbuild/",
+            dockerfile_contents = tilt_dockerfile_header_cspo,
+            target = "tilt",
+            entrypoint = entrypoint,
+            live_update = [
+                sync(".tiltbuild/manager", "/manager"),
+            ],
+            ignore = ["templates"],
+        )
     k8s_yaml(blob(yaml))
     k8s_resource(workload = "cspo-controller-manager", labels = ["cspo"])
     k8s_resource(
         objects = [
             "cspo-system:namespace",
-            #"clusterstackreleases.clusterstack.x-k8s.io:customresourcedefinition",
-            #"clusterstacks.clusterstack.x-k8s.io:customresourcedefinition",
             "cspo-controller-manager:serviceaccount",
             "cspo-leader-election-role:role",
             "cspo-manager-role:clusterrole",
             "cspo-leader-election-rolebinding:rolebinding",
             "cspo-manager-rolebinding:clusterrolebinding",
-            #"cspo-serving-cert:certificate",
             "cspo-cluster-stack-variables:secret",
-            #"cspo-selfsigned-issuer:issuer",
-            #"cspo-validating-webhook-configuration:validatingwebhookconfiguration",
+            "openstackclusterstackreleases.infrastructure.clusterstack.x-k8s.io:customresourcedefinition",
+            "openstackclusterstackreleasetemplates.infrastructure.clusterstack.x-k8s.io:customresourcedefinition",
+            "openstacknodeimagereleases.infrastructure.clusterstack.x-k8s.io:customresourcedefinition",
+            # "cspo-serving-cert:certificate",
+            # "cspo-selfsigned-issuer:issuer", # uncomment when you add webhook code.
         ],
         new_name = "cspo-misc",
         labels = ["cspo"],
@@ -208,8 +275,7 @@ def cspo_template():
     cspo_yaml = local(cmd, quiet=True)
     k8s_yaml(cspo_yaml)
     k8s_resource(objects = ["cspotemplate:openstackclusterstackreleasetemplate"], new_name = "cspotemplate", labels = ["cspo-template"])
-
-
+    
 def clusterstack():
     k8s_resource(objects = ["clusterstack:clusterstack"], new_name = "clusterstack", labels = ["clusterstack"])
 
@@ -272,7 +338,10 @@ if settings.get("deploy_observability"):
 
 deploy_capi()
 
-deploy_cso()
+if settings.get("local_mode"):
+    deploy_local_cso()
+else:
+    deploy_cso()
 
 deploy_cspo()
 

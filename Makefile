@@ -139,12 +139,6 @@ $(TRIVY):
 	curl -sSL https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.tar.gz | tar xz -C $(TOOLS_BIN_DIR) trivy
 	chmod a+rx $(TRIVY)
 
-HELM := $(abspath $(TOOLS_BIN_DIR)/helm)
-helm: $(HELM) ## Build a local copy of helm
-$(HELM):
-	curl -sSL https://get.helm.sh/helm-v3.12.2-linux-amd64.tar.gz | tar xz -C $(TOOLS_BIN_DIR) --strip-components=1 linux-amd64/helm
-	chmod a+rx $(HELM)
-
 go-binsize-treemap := $(abspath $(TOOLS_BIN_DIR)/go-binsize-treemap)
 go-binsize-treemap: $(go-binsize-treemap) # Build go-binsize-treemap from tools folder.
 $(go-binsize-treemap):
@@ -537,7 +531,7 @@ test-unit: test-unit-openstack ## Run unit tests
 	echo done
 
 .PHONY: test-unit-openstack
-test-unit-openstack: $(SETUP_ENVTEST) $(GOTESTSUM) $(HELM)
+test-unit-openstack: $(SETUP_ENVTEST) $(GOTESTSUM)
 	@mkdir -p $(shell pwd)/.coverage
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GOTESTSUM) --junitfile=.coverage/junit.xml --format testname -- -mod=vendor \
 	-covermode=atomic -coverprofile=.coverage/cover.out -p=4 ./internal/controller/...
