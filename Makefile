@@ -160,7 +160,7 @@ all-tools: $(GOTESTSUM) $(go-cover-treemap) $(go-binsize-treemap) $(KIND) $(PACK
 ##@ Development
 
 env-vars-for-wl-cluster:
-	@./hack/ensure-env-variables.sh GIT_PROVIDER_B64 GIT_ACCESS_TOKEN_B64 GIT_ORG_NAME_B64 GIT_REPOSITORY_NAME_B64 EXP_CLUSTER_RESOURCE_SET CLUSTER_TOPOLOGY CLUSTER_NAME SECRET_NAME CLOUD_NAME ENCODED_CLOUDS_YAML
+	@./hack/ensure-env-variables.sh CLUSTER_TOPOLOGY CLUSTER_NAME SECRET_NAME CLOUD_NAME ENCODED_CLOUDS_YAML
 
 .PHONY: cluster
 cluster: $(CTLPTL) $(KUBECTL) ## Creates kind-dev Cluster 
@@ -589,4 +589,4 @@ get-kubeconfig-workload-cluster:
 
 .PHONY: tilt-up
 tilt-up: env-vars-for-wl-cluster $(ENVSUBST) $(KUBECTL) $(KUSTOMIZE) $(TILT) cluster  ## Start a mgt-cluster & Tilt. Installs the CRDs and deploys the controllers
-	EXP_CLUSTER_RESOURCE_SET=true $(TILT) up --port=10351
+	$(TILT) up --port=10351
