@@ -6,8 +6,8 @@ metadata:
 spec:
   template:
     spec: {}
-    # Field identityRef is optional and its default values ​​are as follows:
+    # Field identityRef is optional and its default values are as follows:
     # identityRef.kind: "Secret", identityRef.name: "openstack"
-      # identityRef:
-      #   kind: Secret
-      #   name: "<your-secret-name>"
+    # identityRef:
+    #   kind: Secret
+    #   name: "<your-secret-name>"
