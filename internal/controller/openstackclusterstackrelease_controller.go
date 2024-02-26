@@ -29,7 +29,6 @@ import (
 	githubclient "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client"
 	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/release"
 	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -61,7 +60,6 @@ type NodeImages struct {
 }
 
 const (
-	cloudNameSecretKey                           = "cloudName"
 	metadataFileName                             = "metadata.yaml"
 	nodeImagesFileName                           = "node-images.yaml"
 	waitForOpenStackNodeImageReleasesBecomeReady = 30 * time.Second
@@ -176,32 +174,8 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 		}
 
 		osnirName := fmt.Sprintf("%s-%s-%s", nameWithoutVersion, openStackNodeImage.CreateOpts.Name, nodeImageVersion)
-		cloudName, err := r.getCloudNameFromSecret(ctx, openstackclusterstackrelease.Namespace, openstackclusterstackrelease.Spec.IdentityRef.Name)
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				conditions.MarkFalse(openstackclusterstackrelease,
-					apiv1alpha1.CloudNameAvailableCondition,
-					apiv1alpha1.SecretNotFoundReason,
-					clusterv1beta1.ConditionSeverityError,
-					err.Error(),
-				)
-				record.Warnf(openstackclusterstackrelease, "SecretNotFound", err.Error())
-				logger.Error(err, "failed to get secret")
-				return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
-			}
-			conditions.MarkFalse(openstackclusterstackrelease,
-				apiv1alpha1.CloudNameAvailableCondition,
-				apiv1alpha1.IssueWithSecretReason,
-				clusterv1beta1.ConditionSeverityWarning,
-				err.Error(),
-			)
-			record.Warnf(openstackclusterstackrelease, "IssueWithSecret", err.Error())
-			return ctrl.Result{}, fmt.Errorf("failed to get cloud name from secret: %w", err)
-		}
 
-		conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.CloudNameAvailableCondition)
-
-		if err := r.createOrUpdateOpenStackNodeImageRelease(ctx, openstackclusterstackrelease, osnirName, cloudName, openStackNodeImage, ownerRef); err != nil {
+		if err := r.createOrUpdateOpenStackNodeImageRelease(ctx, openstackclusterstackrelease, osnirName, openStackNodeImage, ownerRef); err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to create or update OpenStackNodeImageRelease %s/%s: %w", openstackclusterstackrelease.Namespace, osnirName, err)
 		}
 	}
@@ -244,7 +218,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 	return ctrl.Result{}, nil
 }
 
-func (r *OpenStackClusterStackReleaseReconciler) createOrUpdateOpenStackNodeImageRelease(ctx context.Context, openstackclusterstackrelease *apiv1alpha1.OpenStackClusterStackRelease, osnirName, cloudName string, openStackNodeImage *apiv1alpha1.OpenStackNodeImage, ownerRef *metav1.OwnerReference) error {
+func (r *OpenStackClusterStackReleaseReconciler) createOrUpdateOpenStackNodeImageRelease(ctx context.Context, openstackclusterstackrelease *apiv1alpha1.OpenStackClusterStackRelease, osnirName string, openStackNodeImage *apiv1alpha1.OpenStackNodeImage, ownerRef *metav1.OwnerReference) error {
 	openStackNodeImageRelease := &apiv1alpha1.OpenStackNodeImageRelease{}
 
 	err := r.Get(ctx, types.NamespacedName{Name: osnirName, Namespace: openstackclusterstackrelease.Namespace}, openStackNodeImageRelease)
@@ -276,7 +250,6 @@ func (r *OpenStackClusterStackReleaseReconciler) createOrUpdateOpenStackNodeImag
 	}
 	openStackNodeImageRelease.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 	openStackNodeImageRelease.Spec.Image = openStackNodeImage
-	openStackNodeImageRelease.Spec.CloudName = cloudName
 	openStackNodeImageRelease.Spec.IdentityRef = openstackclusterstackrelease.Spec.IdentityRef
 
 	if err := r.Create(ctx, openStackNodeImageRelease); err != nil {
@@ -374,32 +347,6 @@ func cutOpenStackClusterStackReleaseVersionFromReleaseTag(releaseTag string) (st
 		return "", fmt.Errorf("invalid release tag %s", releaseTag)
 	}
 	return fmt.Sprintf("%s-%s-%s-%s", v[0], v[1], v[2], v[3]), nil
-}
-
-func (r *OpenStackClusterStackReleaseReconciler) getCloudNameFromSecret(ctx context.Context, secretNamespace, secretName string) (string, error) {
-	var cloudName string
-	emptyCloudName := ""
-	defaultCloudName := "openstack"
-
-	secret := &corev1.Secret{}
-	err := r.Get(ctx, types.NamespacedName{
-		Namespace: secretNamespace,
-		Name:      secretName,
-	}, secret)
-	if err != nil {
-		return emptyCloudName, fmt.Errorf("failed to get secret %s in namespace %s: %w", secretName, secretNamespace, err)
-	}
-
-	content, ok := secret.Data[cloudNameSecretKey]
-	if !ok {
-		return defaultCloudName, nil
-	}
-
-	if err := yaml.Unmarshal(content, &cloudName); err != nil {
-		return emptyCloudName, fmt.Errorf("failed to unmarshal cloudName stored in secret %s: %w", secretName, err)
-	}
-
-	return cloudName, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

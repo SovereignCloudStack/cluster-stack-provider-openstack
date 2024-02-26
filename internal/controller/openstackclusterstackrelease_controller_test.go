@@ -341,10 +341,9 @@ func TestCreateOpenStackNodeImageRelease(t *testing.T) {
 		Client: client,
 	}
 
-	cloudName, err := r.getCloudNameFromSecret(context.TODO(), secretNamespace, secretName)
 	assert.NoError(t, err)
 
-	err = r.createOrUpdateOpenStackNodeImageRelease(context.TODO(), openstackclusterstackrelease, "test-osnir", cloudName, openStackNodeImage, ownerRef)
+	err = r.createOrUpdateOpenStackNodeImageRelease(context.TODO(), openstackclusterstackrelease, "test-osnir", openStackNodeImage, ownerRef)
 
 	assert.NoError(t, err)
 	osnir := &apiv1alpha1.OpenStackNodeImageRelease{}
@@ -358,7 +357,6 @@ func TestCreateOpenStackNodeImageRelease(t *testing.T) {
 			APIVersion: apiv1alpha1.GroupVersion.String(),
 		},
 		Spec: apiv1alpha1.OpenStackNodeImageReleaseSpec{
-			CloudName: "openstack",
 			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
 				Kind: "Secret",
 				Name: "supersecret",
@@ -439,7 +437,6 @@ func TestUpdateOpenStackNodeImageRelease(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: apiv1alpha1.OpenStackNodeImageReleaseSpec{
-			CloudName: "test-cloudname",
 			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
 				Kind: "Secret",
 				Name: "supersecret",
@@ -469,7 +466,7 @@ func TestUpdateOpenStackNodeImageRelease(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, ownerRef.UID, osnir.OwnerReferences[0].UID)
 
-	err = r.createOrUpdateOpenStackNodeImageRelease(context.TODO(), openstackclusterstackrelease, "test-update-osnir", "test-cloud-name", openStackNodeImage, newOwnerRef)
+	err = r.createOrUpdateOpenStackNodeImageRelease(context.TODO(), openstackclusterstackrelease, "test-update-osnir", openStackNodeImage, newOwnerRef)
 	assert.NoError(t, err)
 
 	err = client.Get(context.TODO(), types.NamespacedName{Name: "test-update-osnir", Namespace: "test-namespace"}, osnir)
@@ -482,56 +479,6 @@ func TestUpdateOpenStackNodeImageRelease(t *testing.T) {
 	assert.NoError(t, err)
 	err = client.Delete(context.TODO(), openstackclusterstackrelease)
 	assert.NoError(t, err)
-}
-
-func TestGetCloudNameFromSecret(t *testing.T) {
-	client := fake.NewClientBuilder().Build()
-
-	secretName := "supersecret"
-	secretNamespace := "test-namespace"
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: secretNamespace,
-		},
-		Type: corev1.SecretTypeOpaque,
-	}
-	err := client.Create(context.TODO(), secret)
-	assert.NoError(t, err)
-
-	r := &OpenStackClusterStackReleaseReconciler{
-		Client: client,
-	}
-
-	cloudName, err := r.getCloudNameFromSecret(context.TODO(), secretNamespace, secretName)
-	expectedCloudName := "openstack"
-
-	assert.NoError(t, err)
-	assert.Equal(t, expectedCloudName, cloudName)
-
-	err = client.Delete(context.TODO(), secret)
-	assert.NoError(t, err)
-}
-
-func TestGetCloudNameFromSecretNotFound(t *testing.T) {
-	client := fake.NewClientBuilder().Build()
-
-	r := &OpenStackClusterStackReleaseReconciler{
-		Client: client,
-	}
-
-	secretName := "nonexistent-secret"
-	secretNamespace := "nonexistent-namespace"
-	expectedError := "secrets \"nonexistent-secret\" not found"
-
-	cloudName, err := r.getCloudNameFromSecret(context.TODO(), secretNamespace, secretName)
-
-	expectedErrorMessage := fmt.Sprintf("failed to get secret %s in namespace %s: %v", secretName, secretNamespace, expectedError)
-
-	assert.Error(t, err)
-	assert.True(t, apierrors.IsNotFound(err))
-	assert.Equal(t, "", cloudName)
-	assert.EqualError(t, err, expectedErrorMessage)
 }
 
 var _ = Describe("OpenStackClusterStackRelease controller", func() {
