@@ -342,9 +342,10 @@ func getNodeImagesFromLocal(localDownloadPath string) (*NodeImages, error) {
 
 // cutOpenStackClusterStackReleaseVersionFromReleaseTag returns a release tag without version,
 // e.g.  from `openstack-ferrol-1-27-v2` returns `openstack-ferrol-1-27`.
+// e.g.  from `openstack-ferrol-1-27-v0-sha-a3baa3a` returns `openstack-ferrol-1-27`.
 func cutOpenStackClusterStackReleaseVersionFromReleaseTag(releaseTag string) (string, error) {
 	v := strings.Split(releaseTag, "-")
-	if len(v) != 5 && len(v) != 6 {
+	if len(v) != 5 && len(v) != 7 {
 		return "", fmt.Errorf("invalid release tag %s", releaseTag)
 	}
 	return fmt.Sprintf("%s-%s-%s-%s", v[0], v[1], v[2], v[3]), nil
