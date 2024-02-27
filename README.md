@@ -143,10 +143,11 @@ kubectl --kubeconfig kubeconfig.yaml get nodes
 
 # Compatibility with Cluster Stack Operator
 
-|                         | CSO `v0.1.0-alpha.2` |
-| ----------------------- | -------------------- |
-| CSPO `v0.1.0-alpha.rc1` | ✓ |
-| CSPO `v0.1.0-alpha.1`   | ✓ |
+|                         | CSO `v0.1.0-alpha.2` | CSO `v0.1.0-alpha.3` |
+| ----------------------- | -------------------- | -------------------- |
+| CSPO `v0.1.0-alpha.rc1` | ✓ |   |
+| CSPO `v0.1.0-alpha.1`   | ✓ | ✓ |
+| CSPO `v0.1.0-alpha.2`   | ✓ | ✓ |
 
 # Development guide
 
