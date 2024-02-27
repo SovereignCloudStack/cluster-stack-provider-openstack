@@ -50,6 +50,7 @@ type OpenStackNodeImageReleaseReconciler struct {
 }
 
 const (
+	defaultCloudName         = "openstack"
 	cloudNameSecretKey       = "cloudName"
 	cloudsSecretKey          = "clouds.yaml"
 	waitForImageBecomeActive = 30 * time.Second
@@ -296,7 +297,6 @@ func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Con
 	var clouds clientconfig.Clouds
 	emptyCloud := clientconfig.Cloud{}
 	var cloudName string
-	defaultCloudName := "openstack"
 
 	secret := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{
