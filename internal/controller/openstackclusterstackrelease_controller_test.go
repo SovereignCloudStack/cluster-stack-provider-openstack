@@ -74,7 +74,6 @@ func TestGenerateOwnerReference(t *testing.T) {
 			UID:       "fb686e33-01a6-42c9-a210-2c26ec8cb331",
 		},
 		Spec: apiv1alpha1.OpenStackClusterStackReleaseSpec{
-			CloudName: "openstack",
 			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
 				Kind: "Secret",
 				Name: "supersecret",
@@ -103,7 +102,6 @@ func TestMatchOwnerReference(t *testing.T) {
 			Name: "openstack-ferrol-1-27-v1",
 		},
 		Spec: apiv1alpha1.OpenStackClusterStackReleaseSpec{
-			CloudName: "openstack",
 			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
 				Kind: "Secret",
 				Name: "supersecret1",
@@ -122,7 +120,6 @@ func TestMatchOwnerReference(t *testing.T) {
 			Name: "openstack-ferrol-1-27-v2",
 		},
 		Spec: apiv1alpha1.OpenStackClusterStackReleaseSpec{
-			CloudName: "openstack",
 			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
 				Kind: "Secret",
 				Name: "supersecret2",
@@ -245,7 +242,6 @@ func TestGetOwnedOpenStackNodeImageReleases(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: apiv1alpha1.OpenStackClusterStackReleaseSpec{
-			CloudName: "test-cloudname",
 			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
 				Kind: "Secret",
 				Name: "supersecret",
@@ -290,6 +286,8 @@ func TestCreateOpenStackNodeImageRelease(t *testing.T) {
 	scheme := runtime.NewScheme()
 	err := apiv1alpha1.AddToScheme(scheme)
 	assert.NoError(t, err)
+	err = corev1.AddToScheme(scheme)
+	assert.NoError(t, err)
 	client := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 	openstackclusterstackrelease := &apiv1alpha1.OpenStackClusterStackRelease{
@@ -302,7 +300,6 @@ func TestCreateOpenStackNodeImageRelease(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: apiv1alpha1.OpenStackClusterStackReleaseSpec{
-			CloudName: "test-cloudname",
 			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
 				Kind: "Secret",
 				Name: "supersecret",
@@ -328,9 +325,23 @@ func TestCreateOpenStackNodeImageRelease(t *testing.T) {
 		UID:        openstackclusterstackrelease.UID,
 	}
 
+	secretName := "supersecret"
+	secretNamespace := "test-namespace"
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: secretNamespace,
+		},
+		Type: corev1.SecretTypeOpaque,
+	}
+	err = client.Create(context.TODO(), secret)
+	assert.NoError(t, err)
+
 	r := &OpenStackClusterStackReleaseReconciler{
 		Client: client,
 	}
+
+	assert.NoError(t, err)
 
 	err = r.createOrUpdateOpenStackNodeImageRelease(context.TODO(), openstackclusterstackrelease, "test-osnir", openStackNodeImage, ownerRef)
 
@@ -346,7 +357,6 @@ func TestCreateOpenStackNodeImageRelease(t *testing.T) {
 			APIVersion: apiv1alpha1.GroupVersion.String(),
 		},
 		Spec: apiv1alpha1.OpenStackNodeImageReleaseSpec{
-			CloudName: "test-cloudname",
 			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
 				Kind: "Secret",
 				Name: "supersecret",
@@ -388,7 +398,6 @@ func TestUpdateOpenStackNodeImageRelease(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: apiv1alpha1.OpenStackClusterStackReleaseSpec{
-			CloudName: "test-cloudname",
 			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
 				Kind: "Secret",
 				Name: "supersecret",
@@ -428,7 +437,6 @@ func TestUpdateOpenStackNodeImageRelease(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: apiv1alpha1.OpenStackNodeImageReleaseSpec{
-			CloudName: "test-cloudname",
 			IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
 				Kind: "Secret",
 				Name: "supersecret",
@@ -510,7 +518,6 @@ var _ = Describe("OpenStackClusterStackRelease controller", func() {
 						Namespace: namespace.Name,
 					},
 					Spec: apiv1alpha1.OpenStackClusterStackReleaseSpec{
-						CloudName: "openstack",
 						IdentityRef: &capoapiv1alpha7.OpenStackIdentityReference{
 							Kind: "Secret",
 							Name: "supersecret",

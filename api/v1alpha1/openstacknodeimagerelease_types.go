@@ -28,9 +28,6 @@ import (
 
 // OpenStackNodeImageReleaseSpec defines the desired state of OpenStackNodeImageRelease.
 type OpenStackNodeImageReleaseSpec struct {
-	// CloudName is the name of the cloud to use from the cloud's secret.
-	// +kubebuilder:validation:MinLength=1
-	CloudName string `json:"cloudName"`
 	// IdentityRef is a reference to a identity to be used when reconciling this cluster
 	IdentityRef *apiv1alpha7.OpenStackIdentityReference `json:"identityRef"`
 	// Image represents options used to upload an image

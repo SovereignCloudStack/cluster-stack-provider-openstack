@@ -46,12 +46,15 @@ clusterctl init --infrastructure openstack
 To enable communication between the CSPO and the Cluster API Provider for OpenStack (CAPO) with the OpenStack API, it is necessary to generate a secret containing the access data (clouds.yaml).
 Ensure that this secret is located in the identical namespace as the other Custom Resources.
 
+> [!NOTE]  
+> The default value of `cloudName` is configured as `openstack`. This setting can be overridden by including the `cloudName` key in the secret. Also, be aware that the name of the secret is expected to be `openstack` unless it is not set differently in OpenStackClusterStackReleaseTemplate in `identityRef.name` field.
+
 ```bash
-kubectl create secret generic <my-cloud-secret> --from-file=clouds.yaml=path/to/clouds.yaml
+kubectl create secret generic openstack --from-file=clouds.yaml=path/to/clouds.yaml
 
 # Patch the created secrets so they are automatically moved to the target cluster later.
 
-kubectl patch secret <my-cloud-secret> -p '{"metadata":{"labels":{"clusterctl.cluster.x-k8s.io/move":""}}}'
+kubectl patch secret openstack -p '{"metadata":{"labels":{"clusterctl.cluster.x-k8s.io/move":""}}}'
 ```
 
 ### CSO and CSPO variables preparation

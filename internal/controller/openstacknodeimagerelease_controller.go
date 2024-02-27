@@ -50,6 +50,8 @@ type OpenStackNodeImageReleaseReconciler struct {
 }
 
 const (
+	defaultCloudName         = "openstack"
+	cloudNameSecretKey       = "cloudName"
 	cloudsSecretKey          = "clouds.yaml"
 	waitForImageBecomeActive = 30 * time.Second
 )
@@ -95,7 +97,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	}()
 
 	// Get OpenStack cloud config from sercet
-	cloud, err := r.getCloudFromSecret(ctx, openstacknodeimagerelease.Namespace, openstacknodeimagerelease.Spec.IdentityRef.Name, openstacknodeimagerelease.Spec.CloudName)
+	cloud, err := r.getCloudFromSecret(ctx, openstacknodeimagerelease.Namespace, openstacknodeimagerelease.Spec.IdentityRef.Name)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			conditions.MarkFalse(openstacknodeimagerelease,
@@ -291,9 +293,10 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	return ctrl.Result{}, nil
 }
 
-func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Context, secretNamespace, secretName, cloudName string) (clientconfig.Cloud, error) {
+func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Context, secretNamespace, secretName string) (clientconfig.Cloud, error) {
 	var clouds clientconfig.Clouds
 	emptyCloud := clientconfig.Cloud{}
+	var cloudName string
 
 	secret := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{
@@ -303,7 +306,17 @@ func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Con
 	if err != nil {
 		return emptyCloud, fmt.Errorf("failed to get secret %s in namespace %s: %w", secretName, secretNamespace, err)
 	}
-	content, ok := secret.Data[cloudsSecretKey]
+
+	content, ok := secret.Data[cloudNameSecretKey]
+	if !ok {
+		cloudName = defaultCloudName
+	} else {
+		if err := yaml.Unmarshal(content, &cloudName); err != nil {
+			return emptyCloud, fmt.Errorf("failed to unmarshal cloudName stored in secret %s: %w", secretName, err)
+		}
+	}
+
+	content, ok = secret.Data[cloudsSecretKey]
 	if !ok {
 		return emptyCloud, fmt.Errorf("OpenStack credentials secret %s did not contain key %s", secretName, cloudsSecretKey)
 	}

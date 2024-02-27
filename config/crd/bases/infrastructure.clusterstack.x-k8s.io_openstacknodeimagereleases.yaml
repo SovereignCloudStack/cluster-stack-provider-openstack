@@ -52,11 +52,6 @@ spec:
             description: OpenStackNodeImageReleaseSpec defines the desired state of
               OpenStackNodeImageRelease.
             properties:
-              cloudName:
-                description: CloudName is the name of the cloud to use from the cloud's
-                  secret.
-                minLength: 1
-                type: string
               identityRef:
                 description: IdentityRef is a reference to a identity to be used when
                   reconciling this cluster
@@ -129,7 +124,6 @@ spec:
                 - url
                 type: object
             required:
-            - cloudName
             - identityRef
             - image
             type: object

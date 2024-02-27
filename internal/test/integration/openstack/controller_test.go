@@ -69,7 +69,6 @@ var _ = Describe("OpenStackNodeImageReleaseReconciler", func() {
 					Namespace: testNs.Name,
 				},
 				Spec: cspov1alpha1.OpenStackClusterStackReleaseSpec{
-					CloudName: "openstack",
 					IdentityRef: &apiv1alpha7.OpenStackIdentityReference{
 						Kind: "Secret",
 						Name: "supersecret",

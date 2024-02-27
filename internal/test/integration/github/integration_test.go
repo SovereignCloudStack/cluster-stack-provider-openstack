@@ -17,6 +17,9 @@ limitations under the License.
 package github
 
 import (
+	"encoding/base64"
+	"os"
+
 	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/test/utils"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -43,6 +46,21 @@ var _ = Describe("OpenStackClusterStackReleaseReconciler", func() {
 
 			openstackClusterStackReleaseKey = types.NamespacedName{Name: "openstack-scs-1-27-v2", Namespace: testNs.Name}
 
+			cloudsYAMLBase64 := os.Getenv("ENCODED_CLOUDS_YAML")
+			cloudsYAMLData, err := base64.StdEncoding.DecodeString(cloudsYAMLBase64)
+			Expect(err).NotTo(HaveOccurred())
+
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "supersecret",
+					Namespace: testNs.Name,
+				},
+				Data: map[string][]byte{
+					"clouds.yaml": cloudsYAMLData,
+				},
+			}
+			Expect(testEnv.Create(ctx, secret)).To(Succeed())
+
 			openStackClusterStackRelease = &cspov1alpha1.OpenStackClusterStackRelease{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "OpenStackClusterStackRelease",
@@ -53,7 +71,6 @@ var _ = Describe("OpenStackClusterStackReleaseReconciler", func() {
 					Namespace: testNs.Name,
 				},
 				Spec: cspov1alpha1.OpenStackClusterStackReleaseSpec{
-					CloudName: "capi-openstack-scs-1-27-v2",
 					IdentityRef: &apiv1alpha7.OpenStackIdentityReference{
 						Kind: "Secret",
 						Name: "supersecret",
