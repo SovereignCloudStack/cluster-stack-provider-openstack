@@ -40,7 +40,6 @@ func TestGetCloudFromSecret(t *testing.T) {
 
 	secretName := "test-secret"
 	secretNamespace := "test-namespace"
-	cloudName := "openstack"
 	cloudsYAML := `
 clouds:
   openstack:
@@ -69,7 +68,7 @@ clouds:
 		Client: client,
 	}
 
-	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName, cloudName)
+	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
 
 	expectedCloud := clientconfig.Cloud{
 		AuthInfo: &clientconfig.AuthInfo{
@@ -99,9 +98,8 @@ func TestGetCloudFromSecretNotFound(t *testing.T) {
 	secretName := "nonexistent-secret"
 	secretNamespace := "nonexistent-namespace"
 	expectedError := "secrets \"nonexistent-secret\" not found"
-	cloudName := "nonexistent-cloud"
 
-	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName, cloudName)
+	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
 
 	expectedErrorMessage := fmt.Sprintf("failed to get secret %s in namespace %s: %v", secretName, secretNamespace, expectedError)
 
@@ -120,7 +118,6 @@ func TestGetCloudFromSecretMissingCloudsSecretKey(t *testing.T) {
 
 	secretName := "test-secret"
 	secretNamespace := "test-namespace"
-	cloudName := "openstack"
 
 	// Create a secret with the bad cloudsSecretKey.
 	secret := &corev1.Secret{
@@ -134,7 +131,7 @@ func TestGetCloudFromSecretMissingCloudsSecretKey(t *testing.T) {
 	err := client.Create(context.TODO(), secret)
 	assert.NoError(t, err)
 
-	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName, cloudName)
+	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, fmt.Sprintf("OpenStack credentials secret %s did not contain key %s", secretName, cloudsSecretKey))
@@ -172,13 +169,16 @@ clouds:
 			Name:      secretName,
 			Namespace: secretNamespace,
 		},
-		Data: map[string][]byte{cloudsSecretKey: []byte(cloudsYAML)},
+		Data: map[string][]byte{
+			cloudsSecretKey:    []byte(cloudsYAML),
+			cloudNameSecretKey: []byte(cloudName),
+		},
 		Type: corev1.SecretTypeOpaque,
 	}
 	err := client.Create(context.TODO(), secret)
 	assert.NoError(t, err)
 
-	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName, cloudName)
+	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, fmt.Sprintf("failed to find cloud %s in %s", cloudName, cloudsSecretKey))

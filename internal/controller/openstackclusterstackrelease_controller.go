@@ -250,7 +250,6 @@ func (r *OpenStackClusterStackReleaseReconciler) createOrUpdateOpenStackNodeImag
 	}
 	openStackNodeImageRelease.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 	openStackNodeImageRelease.Spec.Image = openStackNodeImage
-	openStackNodeImageRelease.Spec.CloudName = openstackclusterstackrelease.Spec.CloudName
 	openStackNodeImageRelease.Spec.IdentityRef = openstackclusterstackrelease.Spec.IdentityRef
 
 	if err := r.Create(ctx, openStackNodeImageRelease); err != nil {

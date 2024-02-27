@@ -268,7 +268,7 @@ def deploy_cspo():
 
 def create_secret():
     cmd = "cat .secret.yaml | {} | kubectl apply -f -".format(envsubst_cmd)
-    local_resource('supersecret', cmd, labels=["clouds-yaml-secret"])    
+    local_resource('supersecret', cmd, labels=["clouds-yaml-secret"])
 
 def cspo_template():
     cmd = "cat .cspotemplate.yaml | {}".format(envsubst_cmd)
