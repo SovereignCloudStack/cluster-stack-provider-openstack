@@ -46,20 +46,48 @@ const (
 )
 
 func TestCutOpenStackClusterStackReleaseVersionFromReleaseTag(t *testing.T) {
-	// correct release tag
-	releaseTag := "openstack-ferrol-1-27-v2"
-	nameWithoutVersion, err := cutOpenStackClusterStackReleaseVersionFromReleaseTag(releaseTag)
+	tests := []struct {
+		releaseTag string
+		expected   string
+		incorrect  bool
+	}{
+		{
+			"openstack-ferrol-1-27-v2", // stable channel
+			"openstack-ferrol-1-27",
+			false,
+		},
+		{
+			"openstack-ferrol-1-27-v0-sha-a3baa3a", // custom channel (hash mode)
+			"openstack-ferrol-1-27",
+			false,
+		},
+		{
+			"docker-ferrol-1-26-v1-alpha-0", // alpha channel
+			"docker-ferrol-1-26",
+			false,
+		},
+		{
+			"openstack-ferrol-1-27", // incorrect tag
+			"",
+			true,
+		},
+		{
+			"docker-ferrol-1.26", // incorrect tag
+			"",
+			true,
+		},
+	}
+	for _, test := range tests {
+		nameWithoutVersion, err := cutOpenStackClusterStackReleaseVersionFromReleaseTag(test.releaseTag)
+		if test.incorrect {
+			assert.Error(t, err)
+			assert.EqualError(t, err, fmt.Sprintf("invalid release tag %s", test.releaseTag))
+		} else {
+			assert.NoError(t, err)
+		}
 
-	assert.NoError(t, err)
-	assert.Equal(t, nameWithoutVersion, "openstack-ferrol-1-27")
-
-	// incorrect release tag
-	releaseTag = "openstack-ferrol-1-27"
-	nameWithoutVersion, err = cutOpenStackClusterStackReleaseVersionFromReleaseTag(releaseTag)
-
-	assert.Error(t, err)
-	assert.EqualError(t, err, fmt.Sprintf("invalid release tag %s", releaseTag))
-	assert.Empty(t, nameWithoutVersion)
+		assert.Equal(t, nameWithoutVersion, test.expected)
+	}
 }
 
 func TestGenerateOwnerReference(t *testing.T) {
