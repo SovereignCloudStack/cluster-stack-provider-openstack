@@ -5,8 +5,8 @@ start;
 
 repeat
   :OpenStackClusterStackRelease controller enqueues a Reconcile call;
-  :Create GitHub client;
   if (Release assets have been download into the CSPO container) then (no)
+    :Create GitHub client;
     #LightBlue:Download Release assets;
     #Pink:Return RequeueError;
     note left: make sure that Release can be accessed

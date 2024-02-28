@@ -1,6 +1,6 @@
 # Quickstart
 
-This section guides you through all the necessary steps to create a workload Kubernetes cluster on top of the OpenStack infrastructure. The guide describes a path that utilizes the [clusterctl] CLI tool to manage the lifecycle of a CAPI management cluster and employs [kind] to create a local non-production management cluster.
+This section guides you through all the necessary steps to create a workload Kubernetes cluster on top of the OpenStack infrastructure. The guide describes a path that utilizes the [clusterctl] CLI tool to manage the lifecycle of a [CAPI] management cluster and employs [kind] to create a local non-production management cluster.
 
 Note that it is a common practice to create a temporary, local [bootstrap cluster](https://cluster-api.sigs.k8s.io/reference/glossary#bootstrap-cluster) which is then used to provision a target [management cluster](https://cluster-api.sigs.k8s.io/reference/glossary#management-cluster) on the selected infrastructure.
 
@@ -9,6 +9,7 @@ Note that it is a common practice to create a temporary, local [bootstrap cluste
 - Install [Docker] and [kind]
 - Install [kubectl]
 - Install [clusterctl]
+- Install [jq]
 - Install [go]  # installation of the Go package `envsubst` is required to enable the expansion of variables specified in CSPO and CSO manifests.
 
 ## Initialize the management cluster
@@ -40,9 +41,9 @@ Ensure that this secret is located in the identical namespace as the other Custo
 ```bash
 kubectl create secret generic openstack --from-file=clouds.yaml=path/to/clouds.yaml
 
-# Patch the created secrets so they are automatically moved to the target cluster later.
+# Label the created secrets so they are automatically moved to the target cluster later.
 
-kubectl patch secret openstack -p '{"metadata":{"labels":{"clusterctl.cluster.x-k8s.io/move":""}}}'
+kubectl label secret openstack clusterctl.cluster.x-k8s.io/move=
 ```
 
 ### CSO and CSPO variables preparation
@@ -89,8 +90,7 @@ curl -sSL https://github.com/SovereignCloudStack/cluster-stack-provider-openstac
 ## Create the workload cluster
 
 To transfer the credentials stored in the mentioned secret [above](#create-a-secret-for-openstack-access) to the operator,
-create an `OpenStackClusterStackReleaseTemplate` object and specify this secret in the `identityRef` field.
-The `clouds.yaml` file may contain one or more clouds, so users must specify the desired connection to a specific cloud using the `cloudName` field.
+create an `OpenStackClusterStackReleaseTemplate` object.
 Refer to the `examples/cspotemplate.yaml` file for more details.
 
 Next, apply this template to the management cluster:
@@ -106,7 +106,7 @@ kubectl apply -f <path-to-openstack-clusterstack>
 ```
 
 Please be patient and wait for the operator to execute the necessary tasks.
-If your `ClusterStack` object encounters no errors and `openstacknodeimagereleases` is ready, you can deploy a workload cluster.
+If your `ClusterStack` object encounters no errors and reports usable versions, as well as the `openstackclusterstackrelease` and `openstacknodeimagereleases` are ready, you can deploy a workload cluster.
 This can be done by applying the cluster-template.
 Refer to the example of this template in `examples/cluster.yaml`:
 
@@ -135,5 +135,7 @@ kubectl --kubeconfig kubeconfig.yaml get nodes
 [kubectl]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [clusterctl]: https://cluster-api.sigs.k8s.io/user/quick-start.html#install-clusterctl
 [CAPO]: https://github.com/kubernetes-sigs/cluster-api-provider-openstack
+[CAPI]: https://cluster-api.sigs.k8s.io/
 [go]: https://go.dev/doc/install
 [envsubst]: https://github.com/drone/envsubst
+[jq]: https://jqlang.github.io/jq/download/
