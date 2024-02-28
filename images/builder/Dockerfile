@@ -50,8 +50,6 @@ FROM docker.io/aquasec/trivy:0.49.0@sha256:c71420cd77f136e8e900f71d272fb89075f60
 ############################
 FROM docker.io/library/golang:1.21.6-bullseye@sha256:fa52abd182d334cfcdffdcc934e21fcfbc71c3cde568e606193ae7db045b1b8d
 
-# update: datasource=repology depName=debian_11/skopeo versioning=loose
-ENV SKOPEO_VERSION="1.2.2+dfsg1-1+b6"
 # update: datasource=github-tags depName=adrienverge/yamllint versioning=semver
 ENV YAMLLINT_VERSION="v1.33.0"
 # update: datasource=github-tags depName=opt-nc/yamlfixer versioning=semver
@@ -62,7 +60,6 @@ RUN apt-get update && \
     apt-get install -qy --no-install-recommends \
     gnupg python3 python3-pip \
     file zip unzip jq gettext \
-    skopeo=${SKOPEO_VERSION} \
     protobuf-compiler libprotobuf-dev \
     libsystemd-dev jq && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
