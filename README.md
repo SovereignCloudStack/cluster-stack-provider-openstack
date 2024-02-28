@@ -1,7 +1,7 @@
 # Cluster Stack Provider OpenStack
 
 [![GitHub Latest Release](https://img.shields.io/github/v/release/SovereignCloudStack/cluster-stack-provider-openstack?logo=github)](https://github.com/SovereignCloudStack/cluster-stack-provider-openstack/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/sovereignCloudStack/cluster-stack-provider-openstack)](https://goreportcard.com/report/github.com/sovereignCloudStack/cluster-stack-provider-openstack)
+[![Go Report Card](https://goreportcard.com/badge/github.com/SovereignCloudStack/cluster-stack-provider-openstack)](https://goreportcard.com/report/github.com/SovereignCloudStack/cluster-stack-provider-openstack)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Overview
