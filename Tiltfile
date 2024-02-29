@@ -131,16 +131,11 @@ def prepare_environment():
     if not os.path.exists('.clusterstack.yaml'):
         local("cp config/cspo/clusterstack.yaml .clusterstack.yaml")
 
-    k8s_yaml('.clusterstack.yaml')
-
     if not os.path.exists('.secret.yaml'):
         local("cp config/cspo/secret.yaml .secret.yaml")
 
     if not os.path.exists('.cluster.yaml'):
         local("cp config/cspo/cluster.yaml .cluster.yaml")
-
-    if not os.path.exists('.cspotemplate.yaml'):
-        local("cp config/cspo/cspotemplate.yaml .cspotemplate.yaml")
 
 def patch_args_with_extra_args(namespace, name, extra_args):
     args_str = str(local("kubectl get deployments {} -n {} -o jsonpath='{{.spec.template.spec.containers[0].args}}'".format(name, namespace)))
@@ -270,15 +265,6 @@ def create_secret():
     cmd = "cat .secret.yaml | {} | kubectl apply -f -".format(envsubst_cmd)
     local_resource('supersecret', cmd, labels=["clouds-yaml-secret"])
 
-def cspo_template():
-    cmd = "cat .cspotemplate.yaml | {}".format(envsubst_cmd)
-    cspo_yaml = local(cmd, quiet=True)
-    k8s_yaml(cspo_yaml)
-    k8s_resource(objects = ["cspotemplate:openstackclusterstackreleasetemplate"], new_name = "cspotemplate", labels = ["cspo-template"])
-    
-def clusterstack():
-    k8s_resource(objects = ["clusterstack:clusterstack"], new_name = "clusterstack", labels = ["clusterstack"])
-
 def base64_encode(to_encode):
     encode_blob = local("echo '{}' | tr -d '\n' | base64 - | tr -d '\n'".format(to_encode), quiet = True)
     return str(encode_blob)
@@ -347,19 +333,15 @@ deploy_cspo()
 
 deploy_capo()
 
-clusterstack()
-
 waitforsystem()
 
 prepare_environment()
 
 create_secret()
 
-cspo_template()
-
 cmd_button(
-    "create workload cluster",
-    argv=["make", "create-workload-cluster-openstack"],
+    "apply workload cluster",
+    argv=["make", "apply-workload-cluster-openstack"],
     location=location.NAV,
     icon_name="add_circle",
 )
@@ -370,3 +352,18 @@ cmd_button(
     location=location.NAV,
     icon_name="cancel",
 )
+
+cmd_button(
+    "apply clusterstack",
+    argv=["make", "apply-clusterstack"],
+    location=location.NAV,
+    icon_name="bolt",
+)
+
+cmd_button(
+    "delete clusterstack",
+    argv=["make", "delete-clusterstack"],
+    location=location.NAV,
+    icon_name="delete",
+)
+
