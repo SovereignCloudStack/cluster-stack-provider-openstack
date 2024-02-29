@@ -11,5 +11,4 @@ spec:
         name: manager
         args:
         - --leader-elect=true
-        - --release-dir=/tmp
         - --local=true
