@@ -22,6 +22,7 @@ github.com/ProtonMail/go-crypto/openpgp/s2k
 ## explicit; go 1.19
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/clusterstack
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client
+github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client/fake
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client/mocks
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/kubernetesversion
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/release
