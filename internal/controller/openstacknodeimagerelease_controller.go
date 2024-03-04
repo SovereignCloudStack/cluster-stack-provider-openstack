@@ -147,7 +147,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 
 	conditions.MarkTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageServiceClientAvailableCondition)
 
-	imageID, err := findImageByName(imageClient, openstacknodeimagerelease.Spec.Image.CreateOpts.Name)
+	imageID, err := getImageID(imageClient, openstacknodeimagerelease.Spec.Image.CreateOpts)
 	if err != nil {
 		conditions.MarkFalse(openstacknodeimagerelease,
 			apiv1alpha1.OpenStackImageReadyCondition,
@@ -331,27 +331,35 @@ func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Con
 	return cloud, nil
 }
 
-func findImageByName(imagesClient *gophercloud.ServiceClient, imageName string) (string, error) {
-	listOpts := images.ListOpts{
-		Name: imageName,
+func getImageID(imagesClient *gophercloud.ServiceClient, imageCreateOps *apiv1alpha1.CreateOpts) (string, error) {
+	var listOpts images.ListOpts
+
+	if imageCreateOps.ID != "" {
+		return imageCreateOps.ID, nil
+	}
+	listOpts = images.ListOpts{
+		Name: imageCreateOps.Name,
+		Tags: imageCreateOps.Tags,
 	}
 
 	allPages, err := images.List(imagesClient, listOpts).AllPages()
 	if err != nil {
-		return "", fmt.Errorf("failed to list images with name %s: %w", imageName, err)
+		return "", fmt.Errorf("failed to list images with name %s: %w", imageCreateOps.Name, err)
 	}
 
 	imageList, err := images.ExtractImages(allPages)
 	if err != nil {
-		return "", fmt.Errorf("failed to extract images with name %s: %w", imageName, err)
+		return "", fmt.Errorf("failed to extract images with name %s: %w", imageCreateOps.Name, err)
 	}
 
-	for i := range imageList {
-		if imageList[i].Name == imageName {
-			return imageList[i].ID, nil
-		}
+	switch len(imageList) {
+	case 0:
+		return "", nil
+	case 1:
+		return imageList[0].ID, nil
+	default:
+		return "", fmt.Errorf("too many images were found with the given image name: %s with tags: %s", imageCreateOps.Name, imageCreateOps.Tags)
 	}
-	return "", nil
 }
 
 func createImage(imageClient *gophercloud.ServiceClient, createOpts *apiv1alpha1.CreateOpts) (*images.Image, error) {
