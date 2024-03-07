@@ -361,7 +361,7 @@ func getImageID(imagesClient *gophercloud.ServiceClient, imageCreateOps *apiv1al
 	case 1:
 		return imageList[0].ID, nil
 	default:
-		return "", fmt.Errorf("too many images were found with the given image name: %s with tags: %s", imageCreateOps.Name, imageCreateOps.Tags)
+		return "", fmt.Errorf("too many images were found with the given image name: %s and tags: %s", imageCreateOps.Name, imageCreateOps.Tags)
 	}
 }
 
