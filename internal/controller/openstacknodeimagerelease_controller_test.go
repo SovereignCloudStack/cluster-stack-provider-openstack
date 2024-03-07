@@ -253,7 +253,7 @@ func TestGetImageIDWithTwoSameImageNames(t *testing.T) {
 
 	assert.Error(t, err) // Expecting an error due to multiple images with the same name
 	assert.Equal(t, "", imageID)
-	assert.Equal(t, err.Error(), "too many images were found with the given image name: test_image with tags: [v1]")
+	assert.Equal(t, err.Error(), "too many images were found with the given image name: test_image and tags: [v1]")
 }
 
 // HandleImageListWithTwoImagesSuccessfully sets up a fake response for image list request.
