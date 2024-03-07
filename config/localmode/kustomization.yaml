@@ -1,0 +1,10 @@
+namespace: cspo-system
+
+namePrefix: cspo-
+resources:
+- ../crd
+- ../rbac
+- ../manager
+patchesStrategicMerge:
+- manager_auth_proxy_patch.yaml
+- manager_config_patch.yaml

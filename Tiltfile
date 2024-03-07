@@ -188,7 +188,10 @@ else:
 # Build cspo and add feature gates
 def deploy_cspo():
     # yaml = str(kustomizesub("./hack/observability")) # build an observable kind deployment by default
-    yaml = str(kustomizesub("./config/default"))
+    if settings.get("local_mode"):
+        yaml = str(kustomizesub("./config/localmode"))
+    else:
+        yaml = str(kustomizesub("./config/default"))
     local_resource(
         name = "cspo-components",
         cmd = ["sh", "-ec", sed_cmd, yaml, "|", envsubst_cmd],
