@@ -335,11 +335,14 @@ func getImageID(imagesClient *gophercloud.ServiceClient, imageCreateOps *apiv1al
 	var listOpts images.ListOpts
 
 	if imageCreateOps.ID != "" {
-		return imageCreateOps.ID, nil
-	}
-	listOpts = images.ListOpts{
-		Name: imageCreateOps.Name,
-		Tags: imageCreateOps.Tags,
+		listOpts = images.ListOpts{
+			ID: imageCreateOps.ID,
+		}
+	} else {
+		listOpts = images.ListOpts{
+			Name: imageCreateOps.Name,
+			Tags: imageCreateOps.Tags,
+		}
 	}
 
 	allPages, err := images.List(imagesClient, listOpts).AllPages()
