@@ -18,7 +18,7 @@ Refer to the [developer guide page](./docs/develop.md) to find more information 
 
 ## Documentation
 
-Explore the documentation stored in the [docs](./docs) directory or view the rendered version online at <https://docs.scs.community/docs/category/operating-scs>.
+Explore the documentation stored in the [docs](./docs) directory or view the rendered version online at <https://docs.scs.community/docs/category/cluster-stacks>.
 
 ## Compatibility with Cluster Stack Operator
 
