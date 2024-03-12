@@ -99,7 +99,7 @@ TILT := $(abspath $(TOOLS_BIN_DIR)/tilt)
 tilt: $(TILT) ## Build a local copy of tilt
 $(TILT):
 	@mkdir -p $(TOOLS_BIN_DIR)
-	MINIMUM_TILT_VERSION=0.33.3 hack/ensure-tilt.sh
+	MINIMUM_TILT_VERSION=0.33.11 hack/ensure-tilt.sh
 
 ENVSUBST := $(abspath $(TOOLS_BIN_DIR)/envsubst)
 envsubst: $(ENVSUBST) ## Build a local copy of envsubst
