@@ -3,7 +3,7 @@ module github.com/sovereignCloudStack/cluster-stack-provider-openstack
 go 1.21
 
 require (
-	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.3
+	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.4
 	github.com/google/go-github/v52 v52.0.0
 	github.com/gophercloud/gophercloud v1.9.0
 	github.com/gophercloud/utils v0.0.0-20231010081019-80377eca5d56
@@ -65,7 +65,6 @@ require (
 	github.com/prometheus/procfs v0.11.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.1 // indirect
-	go.uber.org/goleak v1.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect
 	golang.org/x/crypto v0.16.0 // indirect
