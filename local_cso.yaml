@@ -871,7 +871,7 @@ spec:
         - --local=true
         command:
         - /manager
-        image: ghcr.io/sovereigncloudstack/cso-test:v0.1.0-alpha.3
+        image: ghcr.io/sovereigncloudstack/cso-test:v0.1.0-alpha.5
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3
