@@ -83,12 +83,11 @@ jobs:
       - name: Generate SBOM cspo
         shell: bash
         # To-Do: generate SBOM from source after https://github.com/kubernetes-sigs/bom/issues/202 is fixed
-        # To-Do: format SBOM output to json after cosign v2.0 is released with https://github.com/sigstore/cosign/pull/2479
         run: |
-          bom generate -o sbom_ci_main_cspo_${{ steps.metacspo.outputs.version }}-spdx.json \
+          bom generate --format=json -o sbom_ci_main_cspo_${{ steps.metacspo.outputs.version }}-spdx.json \
           --image=ghcr.io/sovereigncloudstack/cspo:${{ steps.metacspo.outputs.version }}
 
-      - name: Attach SBOM to Container Images cspo
+      - name: Attest SBOM to Container Images cspo
         run: |
           cosign attest --yes --type=spdxjson --predicate sbom_ci_main_cspo_${{ steps.metacspo.outputs.version }}-spdx.json ghcr.io/sovereigncloudstack/cspo@${{ steps.docker_build_release_cspo.outputs.digest }}
 
