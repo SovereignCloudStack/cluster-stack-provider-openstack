@@ -34,7 +34,7 @@ ARG KUBECTL_VERSION="v1.27.3"
 # update: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize\/v(?<version>.+)$
 ARG KUSTOMIZE_VERSION="v5.3.0"
 # update: datasource=github-tags depName=aquasecurity/trivy
-ARG TRIVY_VERSION="v0.48.3"
+ARG TRIVY_VERSION="v0.49.1"
 # update: datasource=github-tags depName=kubernetes-sigs/controller-tools
 ARG CONTROLLER_GEN_VERSION="v0.14.0"
 
