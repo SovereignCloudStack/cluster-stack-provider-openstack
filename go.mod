@@ -5,11 +5,11 @@ go 1.21
 require (
 	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.5
 	github.com/google/go-github/v52 v52.0.0
-	github.com/gophercloud/gophercloud v1.9.0
-	github.com/gophercloud/utils v0.0.0-20231010081019-80377eca5d56
-	github.com/onsi/ginkgo/v2 v2.15.0
-	github.com/onsi/gomega v1.31.1
-	github.com/stretchr/testify v1.8.4
+	github.com/gophercloud/gophercloud v1.11.0
+	github.com/gophercloud/utils b57aefba4cdb
+	github.com/onsi/ginkgo/v2 v2.17.1
+	github.com/onsi/gomega v1.32.0
+	github.com/stretchr/testify v1.9.0
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4
