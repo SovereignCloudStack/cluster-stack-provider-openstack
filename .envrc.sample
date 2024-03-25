@@ -1,3 +1,4 @@
+export PATH="$(pwd)/hack/tools/bin/:$PATH"
 export KUBECONFIG=$PWD/.mgt-cluster-kubeconfig.yaml
 export CLUSTER_TOPOLOGY=true
 export CLUSTER_NAME=test-dfkhje

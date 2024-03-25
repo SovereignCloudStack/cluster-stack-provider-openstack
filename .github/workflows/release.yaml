@@ -121,10 +121,16 @@ jobs:
   release:
     name: Create draft release
     runs-on: ubuntu-latest
+    permissions:
+      packages: read
+    defaults:
+      run:
+        shell: bash
     needs:
       - manager-image
     steps:
       - name: Set env
+        shell: bash
         run: echo "RELEASE_TAG=${GITHUB_REF:10}" >> $GITHUB_ENV
 
       - name: checkout code
