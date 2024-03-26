@@ -19,6 +19,7 @@ IMAGE_PREFIX ?= ghcr.io/sovereigncloudstack
 STAGING_IMAGE = $(CONTROLLER_SHORT)-staging
 BUILDER_IMAGE = $(IMAGE_PREFIX)/$(CONTROLLER_SHORT)-builder
 BUILDER_IMAGE_VERSION = $(shell cat .builder-image-version.txt)
+HACK_TOOLS_BIN_VERSION = $(shell cat ./hack/tools/bin/version.txt)
 
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
@@ -117,27 +118,9 @@ $(CTLPTL):
 	go install github.com/tilt-dev/ctlptl/cmd/ctlptl@v0.8.20
 
 CLUSTERCTL := $(abspath $(TOOLS_BIN_DIR)/clusterctl)
-clusterctl: $(CLUSTERCTL) ## Build a local copy of clusterctl
-$(CLUSTERCTL):
-	curl -sSLf https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.5.3/clusterctl-$$(go env GOOS)-$$(go env GOARCH) -o $(CLUSTERCTL)
-	chmod a+rx $(CLUSTERCTL)
-
 KIND := $(abspath $(TOOLS_BIN_DIR)/kind)
-kind: $(KIND) ## Build a local copy of kind
-$(KIND):
-	go install sigs.k8s.io/kind@v0.20.0
-
 KUBECTL := $(abspath $(TOOLS_BIN_DIR)/kubectl)
-kubectl: $(KUBECTL) ## Build a local copy of kubectl
-$(KUBECTL):
-	curl -fsSL "https://dl.k8s.io/release/v1.27.3/bin/$$(go env GOOS)/$$(go env GOARCH)/kubectl" -o $(KUBECTL)
-	chmod a+rx $(KUBECTL)
-
 TRIVY := $(abspath $(TOOLS_BIN_DIR)/trivy)
-trivy: $(TRIVY) ## Build a local copy of trivy
-$(TRIVY):
-	curl -sSL https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.tar.gz | tar xz -C $(TOOLS_BIN_DIR) trivy
-	chmod a+rx $(TRIVY)
 
 go-binsize-treemap := $(abspath $(TOOLS_BIN_DIR)/go-binsize-treemap)
 go-binsize-treemap: $(go-binsize-treemap) # Build go-binsize-treemap from tools folder.
@@ -154,7 +137,7 @@ gotestsum: $(GOTESTSUM) # Build gotestsum from tools folder.
 $(GOTESTSUM):
 	go install gotest.tools/gotestsum@v1.10.0
 
-all-tools: $(GOTESTSUM) $(go-cover-treemap) $(go-binsize-treemap) $(KIND) $(PACKER) $(KUBECTL) $(CLUSTERCTL) $(CTLPTL) $(SETUP_ENVTEST) $(ENVSUBST) $(KUSTOMIZE) $(CONTROLLER_GEN) $(TRIVY)
+all-tools: get-dependencies $(GOTESTSUM) $(go-cover-treemap) $(go-binsize-treemap) $(CTLPTL) $(SETUP_ENVTEST) $(ENVSUBST)
 	echo 'done'
 
 ##@ Development
@@ -169,7 +152,7 @@ else
 endif
 
 .PHONY: cluster
-cluster: $(CTLPTL) $(KUBECTL) ## Creates kind-dev Cluster 
+cluster: get-dependencies $(CTLPTL) ## Creates kind-dev Cluster 
 	./hack/kind-dev.sh
 
 .PHONY: delete-bootstrap-cluster
@@ -326,18 +309,6 @@ endif
 .PHONY: format-starlark
 format-starlark: ## Format the Starlark codebase
 	./hack/verify-starlark.sh fix
-
-.PHONY: format-yaml
-format-yaml: ## Lint YAML files
-ifeq ($(BUILD_IN_CONTAINER),true)
-	docker run  --rm -t -i \
-		-v $(shell go env GOPATH)/pkg:/go/pkg$(MOUNT_FLAGS) \
-		-v $(shell pwd):/src/cluster-stack-provider-openstack$(MOUNT_FLAGS) \
-		$(BUILDER_IMAGE):$(BUILDER_IMAGE_VERSION) $@;
-else
-	yamlfixer --version
-	yamlfixer -c .yamllint.yaml .
-endif
 
 ##@ Lint
 ########
@@ -556,7 +527,7 @@ test-integration-openstack: $(SETUP_ENVTEST) $(GOTESTSUM)
 lint: lint-golang lint-yaml lint-dockerfile lint-links ## Lint Codebase
 
 .PHONY: format
-format: format-starlark format-golang format-yaml ## Format Codebase
+format: format-starlark format-golang ## Format Codebase
 
 .PHONY: generate
 generate: generate-manifests generate-go-deepcopy generate-boilerplate generate-modules ## Generate Files
@@ -594,5 +565,31 @@ get-kubeconfig-workload-cluster:
 	./hack/get-kubeconfig-of-workload-cluster.sh
 
 .PHONY: tilt-up
-tilt-up: env-vars-for-wl-cluster $(ENVSUBST) $(KUBECTL) $(KUSTOMIZE) $(TILT) cluster  ## Start a mgt-cluster & Tilt. Installs the CRDs and deploys the controllers
+tilt-up: env-vars-for-wl-cluster get-dependencies $(ENVSUBST) $(TILT) cluster  ## Start a mgt-cluster & Tilt. Installs the CRDs and deploys the controllers
 	$(TILT) up --port=10351
+
+BINARIES = clusterctl controller-gen kind kubectl kustomize trivy
+get-dependencies:
+ifeq ($(BUILD_IN_CONTAINER),true)
+	docker run --rm -t -i \
+		-v $(shell pwd):/src/cluster-stack-provider-openstack \
+		$(BUILDER_IMAGE):$(BUILDER_IMAGE_VERSION) $@;
+else
+	@if [ "$(HACK_TOOLS_BIN_VERSION)" != "$(BUILDER_IMAGE_VERSION)" ]; then \
+		echo "Updating binaries"; \
+		rm -rf hack/tools/bin; \
+		mkdir -p $(TOOLS_BIN_DIR); \
+		cp ./.builder-image-version.txt $(TOOLS_BIN_DIR)/version.txt; \
+		for tool in $(BINARIES); do \
+			if command -v $$tool > /dev/null; then \
+				cp `command -v $$tool` $(TOOLS_BIN_DIR); \
+				echo "copied $$tool to $(TOOLS_BIN_DIR)"; \
+			else \
+				echo "$$tool not found"; \
+			fi; \
+		done; \
+	else \
+		echo "No action required"; \
+		echo "Binaries are up to date"; \
+	fi
+endif
