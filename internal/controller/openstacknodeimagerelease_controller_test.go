@@ -26,7 +26,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	th "github.com/gophercloud/gophercloud/testhelper"
 	fakeclient "github.com/gophercloud/gophercloud/testhelper/client"
-	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"

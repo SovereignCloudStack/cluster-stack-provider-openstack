@@ -1,12 +1,14 @@
 module github.com/sovereignCloudStack/cluster-stack-provider-openstack
 
-go 1.21
+go 1.21.6
+
+toolchain go1.22.1
 
 require (
 	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.5
 	github.com/google/go-github/v52 v52.0.0
 	github.com/gophercloud/gophercloud v1.11.0
-	github.com/gophercloud/utils v2.0.0-20240305212012-b57aefba4cdb
+	github.com/gophercloud/utils/v2 v2.0.0-20240305212012-b57aefba4cdb
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.32.0
 	github.com/stretchr/testify v1.9.0
@@ -47,6 +49,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1 // indirect
 	github.com/google/uuid v1.3.1 // indirect
+	github.com/gophercloud/gophercloud/v2 v2.0.0-beta.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -67,13 +70,13 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/crypto v0.20.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/oauth2 v0.14.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/term v0.16.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect

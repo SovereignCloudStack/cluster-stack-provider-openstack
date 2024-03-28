@@ -154,12 +154,24 @@ github.com/gophercloud/gophercloud/openstack/utils
 github.com/gophercloud/gophercloud/pagination
 github.com/gophercloud/gophercloud/testhelper
 github.com/gophercloud/gophercloud/testhelper/client
-# github.com/gophercloud/utils v0.0.0-20231010081019-80377eca5d56
-## explicit; go 1.15
-github.com/gophercloud/utils/env
-github.com/gophercloud/utils/gnocchi
-github.com/gophercloud/utils/internal
-github.com/gophercloud/utils/openstack/clientconfig
+# github.com/gophercloud/gophercloud/v2 v2.0.0-beta.2
+## explicit; go 1.21.6
+github.com/gophercloud/gophercloud/v2
+github.com/gophercloud/gophercloud/v2/internal/ctxt
+github.com/gophercloud/gophercloud/v2/openstack
+github.com/gophercloud/gophercloud/v2/openstack/identity/v2/tenants
+github.com/gophercloud/gophercloud/v2/openstack/identity/v2/tokens
+github.com/gophercloud/gophercloud/v2/openstack/identity/v3/extensions/ec2tokens
+github.com/gophercloud/gophercloud/v2/openstack/identity/v3/extensions/oauth1
+github.com/gophercloud/gophercloud/v2/openstack/identity/v3/tokens
+github.com/gophercloud/gophercloud/v2/openstack/utils
+github.com/gophercloud/gophercloud/v2/pagination
+# github.com/gophercloud/utils/v2 v2.0.0-20240305212012-b57aefba4cdb
+## explicit; go 1.21.6
+github.com/gophercloud/utils/v2/env
+github.com/gophercloud/utils/v2/gnocchi
+github.com/gophercloud/utils/v2/internal
+github.com/gophercloud/utils/v2/openstack/clientconfig
 # github.com/hashicorp/go-uuid v1.0.3
 ## explicit
 github.com/hashicorp/go-uuid
@@ -274,7 +286,7 @@ go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.18.0
+# golang.org/x/crypto v0.20.0
 ## explicit; go 1.18
 golang.org/x/crypto/cast5
 golang.org/x/crypto/hkdf
@@ -288,7 +300,7 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.20.0
+# golang.org/x/net v0.21.0
 ## explicit; go 1.18
 golang.org/x/net/context
 golang.org/x/net/html
@@ -302,13 +314,13 @@ golang.org/x/net/idna
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.16.0
+# golang.org/x/sys v0.18.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.16.0
+# golang.org/x/term v0.17.0
 ## explicit; go 1.18
 golang.org/x/term
 # golang.org/x/text v0.14.0
