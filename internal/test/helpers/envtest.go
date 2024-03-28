@@ -37,7 +37,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2/textlogger"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/log"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,8 +46,7 @@ import (
 )
 
 func init() {
-	klog.InitFlags(nil)
-	logger := klogr.New()
+	logger := textlogger.NewLogger(textlogger.NewConfig())
 
 	// use klog as the internal logger for this envtest environment.
 	log.SetLogger(logger)

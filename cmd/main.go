@@ -24,6 +24,7 @@ import (
 	"time"
 
 	githubclient "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client"
+	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client/fake"
 	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"github.com/sovereignCloudStack/cluster-stack-provider-openstack/internal/controller"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,17 +50,15 @@ func init() {
 }
 
 var (
-	releaseDir         string
-	imageImportTimeout int
+	releaseDir           string
+	imageImportTimeout   int
+	localMode            bool
+	metricsAddr          string
+	enableLeaderElection bool
+	probeAddr            string
 )
 
 func main() {
-	var (
-		metricsAddr          string
-		enableLeaderElection bool
-		probeAddr            string
-	)
-
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(
@@ -70,6 +69,7 @@ func main() {
 	)
 	flag.StringVar(&releaseDir, "release-dir", "/tmp/downloads/", "Specify release directory for cluster-stack releases")
 	flag.IntVar(&imageImportTimeout, "image-import-timeout", 0, "Maximum time in minutes that you allow cspo to import image. If image-import-timeout <= 0, cspo waits forever.")
+	flag.BoolVar(&localMode, "local", false, "Enable local mode where no release assets will be downloaded from a remote Git repository. Useful for implementing cluster stacks.")
 
 	opts := zap.Options{
 		Development: true,
@@ -100,7 +100,12 @@ func main() {
 	// Initialize event recorder.
 	record.InitFromRecorder(mgr.GetEventRecorderFor("cspo-controller"))
 
-	gitFactory := githubclient.NewFactory()
+	var gitFactory githubclient.Factory
+	if localMode {
+		gitFactory = fake.NewFactory()
+	} else {
+		gitFactory = githubclient.NewFactory()
+	}
 
 	if err = (&controller.OpenStackClusterStackReleaseReconciler{
 		Client:              mgr.GetClient(),

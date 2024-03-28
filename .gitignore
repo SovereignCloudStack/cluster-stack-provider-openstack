@@ -31,7 +31,7 @@ temp
 # Tilt files.
 .tiltbuild
 /tilt.d
-tilt-settings.json
+tilt-settings.yaml
 tilt_config.json
 baremetalhosts.yaml
 
@@ -60,9 +60,6 @@ out
 _releasenotes
 templates/cluster-templates/cluster-template*
 
-# Helm
-.helm
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -70,3 +67,8 @@ __pycache__/
 /_output
 tmp_*
 
+.cluster.yaml
+.clusterstack.yaml
+.cspotemplate.yaml
+.secret.yaml
+.release

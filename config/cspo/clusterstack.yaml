@@ -1,3 +1,15 @@
+apiVersion: infrastructure.clusterstack.x-k8s.io/v1alpha1
+kind: OpenStackClusterStackReleaseTemplate
+metadata:
+  name: cspotemplate
+  namespace: cluster
+spec:
+  template:
+    spec:
+      identityRef:
+        kind: Secret
+        name: "${SECRET_NAME}"
+---
 apiVersion: clusterstack.x-k8s.io/v1alpha1
 kind: ClusterStack
 metadata:
@@ -5,7 +17,7 @@ metadata:
   namespace: cluster
 spec:
   provider: openstack
-  name: ferrol
+  name: scs
   kubernetesVersion: "1.27"
   channel: stable
   autoSubscribe: false
@@ -14,4 +26,4 @@ spec:
     kind: OpenStackClusterStackReleaseTemplate
     name: cspotemplate
   versions:
-    - v1
+    - v2
