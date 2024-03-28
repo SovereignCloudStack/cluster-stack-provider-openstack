@@ -26,7 +26,7 @@ import (
 
 	githubmocks "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client/mocks"
 	"github.com/google/go-github/v52/github"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/images"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
