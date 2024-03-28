@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2016 The Kubernetes Authors.
 #
@@ -40,7 +40,7 @@ class TestBoilerplate(unittest.TestCase):
     """
     Note: run this test from the inside the boilerplate directory.
 
-    $ python -m unittest boilerplate_test
+    $ python3 -m unittest boilerplate_test
     """
 
     def setUp(self):
