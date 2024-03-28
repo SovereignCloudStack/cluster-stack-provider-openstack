@@ -27,6 +27,7 @@ Explore the documentation stored in the [docs](./docs) directory or view the ren
 | CSPO `v0.1.0-alpha.rc1` | ✓ |   |   |
 | CSPO `v0.1.0-alpha.1`   | ✓ | ✓ | ✓ |
 | CSPO `v0.1.0-alpha.2`   | ✓ | ✓ | ✓ |
+| CSPO `v0.1.0-alpha.3`   | ✓ | ✓ | ✓ |
 
 ## Controllers
 
