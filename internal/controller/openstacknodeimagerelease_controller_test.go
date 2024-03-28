@@ -22,10 +22,10 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
-	th "github.com/gophercloud/gophercloud/testhelper"
-	fakeclient "github.com/gophercloud/gophercloud/testhelper/client"
+	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/imageimport"
+	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/images"
+	th "github.com/gophercloud/gophercloud/v2/testhelper"
+	fakeclient "github.com/gophercloud/gophercloud/v2/testhelper/client"
 	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
@@ -198,7 +198,7 @@ func TestGetImageID(t *testing.T) {
 		ID: "123",
 	}
 
-	imageID, err := getImageID(fakeclient.ServiceClient(), imageFilter)
+	imageID, err := getImageID(context.TODO(), fakeclient.ServiceClient(), imageFilter)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "123", imageID)
@@ -215,7 +215,7 @@ func TestGetImageIDByNameAndTags(t *testing.T) {
 		Tags: []string{"v1"},
 	}
 
-	imageID, err := getImageID(fakeclient.ServiceClient(), imageFilter)
+	imageID, err := getImageID(context.TODO(), fakeclient.ServiceClient(), imageFilter)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "123", imageID)
@@ -249,7 +249,7 @@ func TestGetImageIDWithTwoSameImageNames(t *testing.T) {
 		Tags: []string{"v1"},
 	}
 
-	imageID, err := getImageID(fakeclient.ServiceClient(), imageFilter)
+	imageID, err := getImageID(context.TODO(), fakeclient.ServiceClient(), imageFilter)
 
 	assert.Error(t, err) // Expecting an error due to multiple images with the same name
 	assert.Equal(t, "", imageID)
@@ -285,7 +285,7 @@ func TestGetImageIDNoImageFound(t *testing.T) {
 		Tags: []string{"v1"},
 	}
 
-	imageID, err := getImageID(fakeclient.ServiceClient(), imageFilter)
+	imageID, err := getImageID(context.TODO(), fakeclient.ServiceClient(), imageFilter)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "", imageID)
@@ -316,7 +316,7 @@ func TestGetImageIDWrongImageName(t *testing.T) {
 		Name: "test_bad_image",
 	}
 
-	imageID, err := getImageID(fakeclient.ServiceClient(), imageFilter)
+	imageID, err := getImageID(context.TODO(), fakeclient.ServiceClient(), imageFilter)
 
 	assert.NoError(t, err)
 	assert.NotEqual(t, "231", imageID)
@@ -342,7 +342,7 @@ func TestGetImageIDNotFound(t *testing.T) {
 
 	fakeClient := fakeclient.ServiceClient()
 
-	imageID, err := getImageID(fakeClient, imageFilter)
+	imageID, err := getImageID(context.TODO(), fakeClient, imageFilter)
 
 	assert.Error(t, err)
 	assert.Equal(t, "", imageID)
@@ -391,7 +391,7 @@ func TestCreateImage(t *testing.T) {
 
 	fakeClient := fakeclient.ServiceClient()
 
-	createdImage, err := createImage(fakeClient, createOpts)
+	createdImage, err := createImage(context.TODO(), fakeClient, createOpts)
 
 	expectedImage := images.Image{
 		ID:              "test_id",
@@ -447,7 +447,7 @@ func TestCreateImageFailed(t *testing.T) {
 
 	fakeClient := fakeclient.ServiceClient()
 
-	createdImage, err := createImage(fakeClient, createOpts)
+	createdImage, err := createImage(context.TODO(), fakeClient, createOpts)
 
 	assert.Error(t, err)
 	assert.Nil(t, createdImage)
@@ -482,7 +482,7 @@ func TestImportImage(t *testing.T) {
 
 	fakeClient := fakeclient.ServiceClient()
 
-	err := importImage(fakeClient, imageID, createOpts)
+	err := importImage(context.TODO(), fakeClient, imageID, createOpts)
 
 	assert.NoError(t, err)
 }
@@ -517,7 +517,7 @@ func TestImportImageError(t *testing.T) {
 
 	fakeClient := fakeclient.ServiceClient()
 
-	err := importImage(fakeClient, imageID, createOpts)
+	err := importImage(context.TODO(), fakeClient, imageID, createOpts)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, fmt.Sprintf("failed to import image with ID %s: Internal Server Error", imageID))

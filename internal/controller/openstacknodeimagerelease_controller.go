@@ -22,10 +22,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/gophercloud/v2/openstack"
+	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/imageimport"
+	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -124,7 +124,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 
 	// Create an OpenStack provider client
 	opts := &clientconfig.ClientOpts{AuthInfo: cloud.AuthInfo}
-	providerClient, err := clientconfig.AuthenticatedClient(opts)
+	providerClient, err := clientconfig.AuthenticatedClient(ctx, opts)
 	if err != nil {
 		record.Warnf(openstacknodeimagerelease, "OpenStackProviderClientNotSet", err.Error())
 		logger.Error(err, "failed to create a provider client")
@@ -147,7 +147,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 
 	conditions.MarkTrue(openstacknodeimagerelease, apiv1alpha1.OpenStackImageServiceClientAvailableCondition)
 
-	imageID, err := getImageID(imageClient, openstacknodeimagerelease.Spec.Image.CreateOpts)
+	imageID, err := getImageID(ctx, imageClient, openstacknodeimagerelease.Spec.Image.CreateOpts)
 	if err != nil {
 		conditions.MarkFalse(openstacknodeimagerelease,
 			apiv1alpha1.OpenStackImageReadyCondition,
@@ -167,7 +167,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 		openstacknodeimagerelease.Status.Ready = false
 
 		imageCreateOpts := openstacknodeimagerelease.Spec.Image.CreateOpts
-		imageCreated, err := createImage(imageClient, imageCreateOpts)
+		imageCreated, err := createImage(ctx, imageClient, imageCreateOpts)
 		if err != nil {
 			conditions.MarkFalse(openstacknodeimagerelease,
 				apiv1alpha1.OpenStackImageReadyCondition,
@@ -185,7 +185,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			Name: imageimport.WebDownloadMethod,
 			URI:  openstacknodeimagerelease.Spec.Image.URL,
 		}
-		err = importImage(imageClient, imageCreated.ID, imageImportOpts)
+		err = importImage(ctx, imageClient, imageCreated.ID, imageImportOpts)
 		if err != nil {
 			conditions.MarkFalse(openstacknodeimagerelease,
 				apiv1alpha1.OpenStackImageReadyCondition,
@@ -206,7 +206,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	}
 
 	// Check if image is active
-	image, err := images.Get(imageClient, imageID).Extract()
+	image, err := images.Get(ctx, imageClient, imageID).Extract()
 	if err != nil {
 		conditions.MarkFalse(openstacknodeimagerelease,
 			apiv1alpha1.OpenStackImageReadyCondition,
@@ -331,7 +331,7 @@ func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Con
 	return cloud, nil
 }
 
-func getImageID(imagesClient *gophercloud.ServiceClient, imageCreateOps *apiv1alpha1.CreateOpts) (string, error) {
+func getImageID(ctx context.Context, imagesClient *gophercloud.ServiceClient, imageCreateOps *apiv1alpha1.CreateOpts) (string, error) {
 	var listOpts images.ListOpts
 
 	if imageCreateOps.ID != "" {
@@ -345,7 +345,7 @@ func getImageID(imagesClient *gophercloud.ServiceClient, imageCreateOps *apiv1al
 		}
 	}
 
-	allPages, err := images.List(imagesClient, listOpts).AllPages()
+	allPages, err := images.List(imagesClient, listOpts).AllPages(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to list images with name %s: %w", imageCreateOps.Name, err)
 	}
@@ -365,8 +365,8 @@ func getImageID(imagesClient *gophercloud.ServiceClient, imageCreateOps *apiv1al
 	}
 }
 
-func createImage(imageClient *gophercloud.ServiceClient, createOpts *apiv1alpha1.CreateOpts) (*images.Image, error) {
-	image, err := images.Create(imageClient, (*images.CreateOpts)(createOpts)).Extract()
+func createImage(ctx context.Context, imageClient *gophercloud.ServiceClient, createOpts *apiv1alpha1.CreateOpts) (*images.Image, error) {
+	image, err := images.Create(ctx, imageClient, (*images.CreateOpts)(createOpts)).Extract()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create image with name %s: %w", createOpts.Name, err)
 	}
@@ -374,8 +374,8 @@ func createImage(imageClient *gophercloud.ServiceClient, createOpts *apiv1alpha1
 	return image, nil
 }
 
-func importImage(imageClient *gophercloud.ServiceClient, imageID string, createOpts imageimport.CreateOpts) error {
-	err := imageimport.Create(imageClient, imageID, createOpts).ExtractErr()
+func importImage(ctx context.Context, imageClient *gophercloud.ServiceClient, imageID string, createOpts imageimport.CreateOpts) error {
+	err := imageimport.Create(ctx, imageClient, imageID, createOpts).ExtractErr()
 	if err != nil {
 		return fmt.Errorf("failed to import image with ID %s: %w", imageID, err)
 	}

@@ -3,12 +3,13 @@ package testhelper
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -46,6 +47,21 @@ func TeardownHTTP() {
 // Endpoint returns a fake endpoint that will actually target the Mux.
 func Endpoint() string {
 	return Server.URL + "/"
+}
+
+// Serves a static content at baseURL/relPath
+func ServeFile(t *testing.T, baseURL, relPath, contentType, content string) string {
+	rawURL := strings.Join([]string{baseURL, relPath}, "/")
+	parsedURL, err := url.Parse(rawURL)
+	AssertNoErr(t, err)
+	Mux.HandleFunc(parsedURL.Path, func(w http.ResponseWriter, r *http.Request) {
+		TestMethod(t, r, "GET")
+		w.Header().Set("Content-Type", contentType)
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, content)
+	})
+
+	return rawURL
 }
 
 // TestFormValues ensures that all the URL parameters given to the http.Request are the same as values.
@@ -90,7 +106,7 @@ func TestHeaderUnset(t *testing.T, r *http.Request, header string) {
 
 // TestBody verifies that the request body matches an expected body.
 func TestBody(t *testing.T, r *http.Request, expected string) {
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		t.Errorf("Unable to read body: %v", err)
 	}
@@ -103,7 +119,7 @@ func TestBody(t *testing.T, r *http.Request, expected string) {
 // TestJSONRequest verifies that the JSON payload of a request matches an expected structure, without asserting things about
 // whitespace or ordering.
 func TestJSONRequest(t *testing.T, r *http.Request, expected string) {
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		t.Errorf("Unable to read request body: %v", err)
 	}

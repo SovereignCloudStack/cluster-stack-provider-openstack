@@ -7,7 +7,7 @@ toolchain go1.22.1
 require (
 	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.5
 	github.com/google/go-github/v52 v52.0.0
-	github.com/gophercloud/gophercloud v1.11.0
+	github.com/gophercloud/gophercloud/v2 v2.0.0-beta.2
 	github.com/gophercloud/utils/v2 v2.0.0-20240305212012-b57aefba4cdb
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.32.0
@@ -49,7 +49,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1 // indirect
 	github.com/google/uuid v1.3.1 // indirect
-	github.com/gophercloud/gophercloud/v2 v2.0.0-beta.2 // indirect
+	github.com/gophercloud/gophercloud v1.11.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
