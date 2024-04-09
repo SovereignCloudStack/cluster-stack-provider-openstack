@@ -17,7 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/images"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiv1alpha7 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
