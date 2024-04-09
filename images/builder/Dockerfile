@@ -26,7 +26,7 @@ FROM cgr.dev/chainguard/wolfi-base:latest as wolfi
 # update: datasource=github-tags depName=kubernetes-sigs/cluster-api
 ARG CLUSTERCTL_VERSION="v1.6.3"
 # update: datasource=github-tags depName=golangci/golangci-lint
-ENV GOLANGCI_VERSION="v1.56.2"
+ENV GOLANGCI_VERSION="v1.57.2"
 # update: datasource=github-tags depName=kubernetes-sigs/kind
 ARG KIND_VERSION="v0.22.0"
 # update: datasource=github-tags depName=kubernetes/kubernetes
