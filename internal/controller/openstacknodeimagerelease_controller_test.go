@@ -68,7 +68,7 @@ clouds:
 		Client: client,
 	}
 
-	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
+	cloud, caCert, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
 
 	expectedCloud := clientconfig.Cloud{
 		AuthInfo: &clientconfig.AuthInfo{
@@ -83,6 +83,65 @@ clouds:
 	}
 	assert.NoError(t, err)
 	assert.Equal(t, expectedCloud, cloud)
+	assert.Equal(t, []byte(nil), caCert)
+
+	err = client.Delete(context.TODO(), secret)
+	assert.NoError(t, err)
+}
+
+func TestGetCloudFromSecretWithCaCert(t *testing.T) {
+	client := fake.NewClientBuilder().Build()
+
+	secretName := "test-secret"
+	secretNamespace := "test-namespace"
+	cloudsYAML := `
+clouds:
+  openstack:
+    auth:
+      username: test_user
+      password: test_password
+      project_name: test_project
+      project_id: test_project_id
+      auth_url: test_auth_url
+      domain_name: test_domain
+    region_name: test_region
+`
+	expectedcaCert := []byte("test-ca-cert")
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: secretNamespace,
+		},
+		Data: map[string][]byte{
+			cloudsSecretKey: []byte(cloudsYAML),
+			caSecretKey:     expectedcaCert,
+		},
+		Type: corev1.SecretTypeOpaque,
+	}
+	err := client.Create(context.TODO(), secret)
+	assert.NoError(t, err)
+
+	r := &OpenStackNodeImageReleaseReconciler{
+		Client: client,
+	}
+
+	cloud, caCert, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
+
+	expectedCloud := clientconfig.Cloud{
+		AuthInfo: &clientconfig.AuthInfo{
+			Username:    "test_user",
+			Password:    "test_password",
+			ProjectName: "test_project",
+			ProjectID:   "test_project_id",
+			AuthURL:     "test_auth_url",
+			DomainName:  "test_domain",
+		},
+		RegionName: "test_region",
+	}
+	assert.NoError(t, err)
+	assert.Equal(t, expectedCloud, cloud)
+	assert.Equal(t, caCert, expectedcaCert)
 
 	err = client.Delete(context.TODO(), secret)
 	assert.NoError(t, err)
@@ -99,7 +158,7 @@ func TestGetCloudFromSecretNotFound(t *testing.T) {
 	secretNamespace := "nonexistent-namespace"
 	expectedError := "secrets \"nonexistent-secret\" not found"
 
-	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
+	cloud, caCert, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
 
 	expectedErrorMessage := fmt.Sprintf("failed to get secret %s in namespace %s: %v", secretName, secretNamespace, expectedError)
 
@@ -107,6 +166,7 @@ func TestGetCloudFromSecretNotFound(t *testing.T) {
 	assert.True(t, apierrors.IsNotFound(err))
 	assert.Equal(t, clientconfig.Cloud{}, cloud)
 	assert.EqualError(t, err, expectedErrorMessage)
+	assert.Equal(t, []byte(nil), caCert)
 }
 
 func TestGetCloudFromSecretMissingCloudsSecretKey(t *testing.T) {
@@ -131,11 +191,12 @@ func TestGetCloudFromSecretMissingCloudsSecretKey(t *testing.T) {
 	err := client.Create(context.TODO(), secret)
 	assert.NoError(t, err)
 
-	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
+	cloud, caCert, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, fmt.Sprintf("OpenStack credentials secret %s did not contain key %s", secretName, cloudsSecretKey))
 	assert.Equal(t, clientconfig.Cloud{}, cloud)
+	assert.Equal(t, []byte(nil), caCert)
 
 	err = client.Delete(context.TODO(), secret)
 	assert.NoError(t, err)
@@ -178,11 +239,12 @@ clouds:
 	err := client.Create(context.TODO(), secret)
 	assert.NoError(t, err)
 
-	cloud, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
+	cloud, caCert, err := r.getCloudFromSecret(context.TODO(), secretNamespace, secretName)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, fmt.Sprintf("failed to find cloud %s in %s", cloudName, cloudsSecretKey))
 	assert.Equal(t, clientconfig.Cloud{}, cloud)
+	assert.Equal(t, []byte(nil), caCert)
 
 	err = client.Delete(context.TODO(), secret)
 	assert.NoError(t, err)
