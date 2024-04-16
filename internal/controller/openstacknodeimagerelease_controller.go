@@ -19,7 +19,10 @@ package controller
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gophercloud/gophercloud/v2"
@@ -53,6 +56,7 @@ const (
 	defaultCloudName         = "openstack"
 	cloudNameSecretKey       = "cloudName"
 	cloudsSecretKey          = "clouds.yaml"
+	caSecretKey              = "cacert"
 	waitForImageBecomeActive = 30 * time.Second
 )
 
@@ -97,7 +101,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	}()
 
 	// Get OpenStack cloud config from sercet
-	cloud, err := r.getCloudFromSecret(ctx, openstacknodeimagerelease.Namespace, openstacknodeimagerelease.Spec.IdentityRef.Name)
+	cloud, caCert, err := r.getCloudFromSecret(ctx, openstacknodeimagerelease.Namespace, openstacknodeimagerelease.Spec.IdentityRef.Name)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			conditions.MarkFalse(openstacknodeimagerelease,
@@ -122,9 +126,39 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 
 	conditions.MarkTrue(openstacknodeimagerelease, apiv1alpha1.CloudAvailableCondition)
 
+	clientOpts := new(clientconfig.ClientOpts)
+
+	if cloud.AuthInfo != nil {
+		clientOpts.AuthInfo = cloud.AuthInfo
+		clientOpts.AuthType = cloud.AuthType
+		clientOpts.RegionName = cloud.RegionName
+		clientOpts.EndpointType = cloud.EndpointType
+	}
+	opts, _ := clientconfig.AuthOptions(clientOpts)
+	opts.AllowReauth = true
+
 	// Create an OpenStack provider client
-	opts := &clientconfig.ClientOpts{AuthInfo: cloud.AuthInfo}
-	providerClient, err := clientconfig.AuthenticatedClient(ctx, opts)
+	providerClient, _ := openstack.NewClient(opts.IdentityEndpoint)
+
+	config := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	if cloud.Verify != nil {
+		config.InsecureSkipVerify = !*cloud.Verify
+	}
+
+	if caCert != nil {
+		config.RootCAs = x509.NewCertPool()
+		ok := config.RootCAs.AppendCertsFromPEM(caCert)
+		if !ok {
+			// If no certificates were successfully parsed, set RootCAs to nil
+			config.RootCAs = nil
+		}
+	}
+
+	providerClient.HTTPClient.Transport = &http.Transport{Proxy: http.ProxyFromEnvironment, TLSClientConfig: config}
+	err = openstack.Authenticate(ctx, providerClient, *opts)
 	if err != nil {
 		record.Warnf(openstacknodeimagerelease, "OpenStackProviderClientNotSet", err.Error())
 		logger.Error(err, "failed to create a provider client")
@@ -293,7 +327,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	return ctrl.Result{}, nil
 }
 
-func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Context, secretNamespace, secretName string) (clientconfig.Cloud, error) {
+func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Context, secretNamespace, secretName string) (clientconfig.Cloud, []byte, error) {
 	var clouds clientconfig.Clouds
 	emptyCloud := clientconfig.Cloud{}
 	var cloudName string
@@ -304,7 +338,7 @@ func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Con
 		Name:      secretName,
 	}, secret)
 	if err != nil {
-		return emptyCloud, fmt.Errorf("failed to get secret %s in namespace %s: %w", secretName, secretNamespace, err)
+		return emptyCloud, nil, fmt.Errorf("failed to get secret %s in namespace %s: %w", secretName, secretNamespace, err)
 	}
 
 	content, ok := secret.Data[cloudNameSecretKey]
@@ -312,23 +346,30 @@ func (r *OpenStackNodeImageReleaseReconciler) getCloudFromSecret(ctx context.Con
 		cloudName = defaultCloudName
 	} else {
 		if err := yaml.Unmarshal(content, &cloudName); err != nil {
-			return emptyCloud, fmt.Errorf("failed to unmarshal cloudName stored in secret %s: %w", secretName, err)
+			return emptyCloud, nil, fmt.Errorf("failed to unmarshal cloudName stored in secret %s: %w", secretName, err)
 		}
 	}
 
 	content, ok = secret.Data[cloudsSecretKey]
 	if !ok {
-		return emptyCloud, fmt.Errorf("OpenStack credentials secret %s did not contain key %s", secretName, cloudsSecretKey)
+		return emptyCloud, nil, fmt.Errorf("OpenStack credentials secret %s did not contain key %s", secretName, cloudsSecretKey)
 	}
 	if err = yaml.Unmarshal(content, &clouds); err != nil {
-		return emptyCloud, fmt.Errorf("failed to unmarshal clouds credentials stored in secret %s: %w", secretName, err)
+		return emptyCloud, nil, fmt.Errorf("failed to unmarshal clouds credentials stored in secret %s: %w", secretName, err)
 	}
 
 	cloud, ok := clouds.Clouds[cloudName]
 	if !ok {
-		return emptyCloud, fmt.Errorf("failed to find cloud %s in %s", cloudName, cloudsSecretKey)
+		return emptyCloud, nil, fmt.Errorf("failed to find cloud %s in %s", cloudName, cloudsSecretKey)
 	}
-	return cloud, nil
+
+	// get caCert
+	caCert, ok := secret.Data[caSecretKey]
+	if !ok {
+		return cloud, nil, nil
+	}
+
+	return cloud, caCert, nil
 }
 
 func getImageID(ctx context.Context, imagesClient *gophercloud.ServiceClient, imageCreateOps *apiv1alpha1.CreateOpts) (string, error) {
