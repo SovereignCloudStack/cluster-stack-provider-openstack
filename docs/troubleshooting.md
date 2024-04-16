@@ -18,7 +18,7 @@ you must specify the CA certificate in your secret, which contains the access da
  ```bash
 apiVersion: v1
 data:
-  caCert: <PEM_ENCODED_CA_CERT>
+  cacert: <PEM_ENCODED_CA_CERT>
   clouds.yaml: <ENCODED_CLOUDS_YAML>
 kind: Secret
 metadata:
