@@ -6,7 +6,7 @@ domain: clusterstack.x-k8s.io
 layout:
 - go.kubebuilder.io/v4
 projectName: cspo
-repo: github.com/sovereignCloudStack/cluster-stack-provider-openstack
+repo: github.com/SovereignCloudStack/cluster-stack-provider-openstack
 resources:
 - api:
     crdVersion: v1
@@ -15,7 +15,7 @@ resources:
   domain: clusterstack.x-k8s.io
   group: infrastructure.clusterstack.x-k8s.io
   kind: OpenStackClusterStackRelease
-  path: github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1
+  path: github.com/SovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
@@ -24,7 +24,7 @@ resources:
   domain: clusterstack.x-k8s.io
   group: infrastructure.clusterstack.x-k8s.io
   kind: OpenStackClusterStackReleaseTemplate
-  path: github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1
+  path: github.com/SovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
@@ -33,6 +33,6 @@ resources:
   domain: clusterstack.x-k8s.io
   group: infrastructure.clusterstack.x-k8s.io
   kind: OpenStackNodeImageRelease
-  path: github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1
+  path: github.com/SovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1
   version: v1alpha1
 version: "3"

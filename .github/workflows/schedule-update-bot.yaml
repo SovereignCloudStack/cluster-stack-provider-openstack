@@ -25,7 +25,7 @@ env:
 # yamllint disable rule:line-length
 jobs:
   update-bot:
-    if: github.repository == 'sovereignCloudStack/cluster-stack-provider-openstack'
+    if: github.repository == 'SovereignCloudStack/cluster-stack-provider-openstack'
     name: Renovate
     runs-on: ubuntu-latest
     steps:

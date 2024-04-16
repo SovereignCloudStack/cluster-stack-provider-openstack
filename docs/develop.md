@@ -86,7 +86,7 @@ Downloading cluster-stacks can be achieved by many ways but below is a simple wa
 ```bash
 mkdir -p .release/openstack-scs-1-27-v1/
 cd .release/openstack-scs-1-27-v1
-gh release download --repo sovereigncloudstack/cluster-stacks openstack-scs-1-27-v1
+gh release download --repo SovereignCloudStack/cluster-stacks openstack-scs-1-27-v1
 ```
 
 Change the repo and tag as per the requirement. You can also download it directly from browser and move it to `.release` directory.
@@ -102,6 +102,6 @@ $ tree .release/openstack-scs-1-27-v1/
 ```
 
 > [!IMPORTANT]
-There's an alternative way to get clusterstacks using [csmctl](https://github.com/sovereigncloudstack/csmctl). You can follow the README of csmctl for specific instructions and a good quickstart.
+There's an alternative way to get clusterstacks using [csmctl](https://github.com/SovereignCloudStack/csmctl). You can follow the README of csmctl for specific instructions and a good quickstart.
 
 You can use `csmctl create` subcommand to create clusterstack locally. You'll need a csmctl.yaml file in the cluster-stack configuration directory. Please read more about creating configuration file for csmctl in the csmctl docs. 
