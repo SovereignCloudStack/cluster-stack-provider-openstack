@@ -4,7 +4,7 @@ This guide explains general info on how to debug issues if a cluster creation fa
 
 ## providerClient authentication err
 
-If you are using https, and when you encounter issue like:
+If you are using https, and when you encounter issues like:
 
 ```
 kubectl logs -n cspoo-system logs -l control-plane=capo-controller-manager <cspo-controller-manager-pod>
