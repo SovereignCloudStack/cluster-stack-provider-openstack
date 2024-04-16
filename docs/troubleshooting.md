@@ -13,7 +13,7 @@ kubectl logs -n cspoo-system logs -l control-plane=capo-controller-manager <cspo
 ...
 ```
 
- you must specify the CA certificate in your secret, which contains the access data to the OpenStack intance, then secret should looks similiar to this example:
+you must specify the CA certificate in your secret, which contains the access data to the OpenStack instance, then secret should look similar to this example:
 
  ```bash
 apiVersion: v1
