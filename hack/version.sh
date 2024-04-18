@@ -77,7 +77,7 @@ version::ldflags() {
         local key=${1}
         local val=${2}
         ldflags+=(
-            "-X 'github.com/SovereignCloudStack/cluster-stack-provider-openstack/pkg/csoversion.${key}=${val}'"
+            "-X 'github.com/SovereignCloudStack/cluster-stack-provider-openstack/pkg/cspoversion.${key}=${val}'"
         )
     }
 
