@@ -28,8 +28,8 @@ You should make sure that everything in the UI looks green. If not, you can trig
 
 ### Applying ClusterStack
 
-When you start your tilt setup then the ClusterStack manifest gets copied from `config/cspo` directory to root of your repository. In order to apply the ClusterStack to the running local development cluster, you can click on the tilt UI. There should a click on the top-right hand side that is named as `apply-clusterstack` if you hover over it. 
-Once the ClusterStack is applied wait for the ClusterStack and ClusterStackRelease object to be ready. In case your ClusterStack shows that it is ready, you can deploy a workload cluster. 
+When you start your tilt setup then the ClusterStack manifest gets copied from `config/cspo` directory to root of your repository. In order to apply the ClusterStack to the running local development cluster, you can click on the tilt UI. There should a click on the top-right hand side that is named as `apply-clusterstack` if you hover over it.
+Once the ClusterStack is applied wait for the ClusterStack and ClusterStackRelease object to be ready. In case your ClusterStack shows that it is ready, you can deploy a workload cluster.
 
 ### Creating workload cluster
 
@@ -102,6 +102,6 @@ $ tree .release/openstack-scs-1-27-v1/
 ```
 
 > [!IMPORTANT]
-There's an alternative way to get clusterstacks using [csmctl](https://github.com/SovereignCloudStack/csmctl). You can follow the README of csmctl for specific instructions and a good quickstart.
+There's an alternative way to get clusterstacks using [csctl](https://github.com/SovereignCloudStack/csctl). You can follow the README of csctl for specific instructions and a good quickstart.
 
-You can use `csmctl create` subcommand to create clusterstack locally. You'll need a csmctl.yaml file in the cluster-stack configuration directory. Please read more about creating configuration file for csmctl in the csmctl docs. 
+You can use `csctl create` subcommand to create clusterstack locally. You'll need a csctl.yaml file in the cluster-stack configuration directory. Please read more about creating configuration file for csctl in the csctl docs.
