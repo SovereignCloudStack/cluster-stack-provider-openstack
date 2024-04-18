@@ -25,12 +25,12 @@ import (
 	"net/http"
 	"time"
 
+	apiv1alpha1 "github.com/SovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/openstack"
 	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/imageimport"
 	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/v2/openstack/clientconfig"
-	apiv1alpha1 "github.com/sovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"

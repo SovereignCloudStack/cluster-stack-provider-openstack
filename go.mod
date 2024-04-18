@@ -1,4 +1,4 @@
-module github.com/sovereignCloudStack/cluster-stack-provider-openstack
+module github.com/SovereignCloudStack/cluster-stack-provider-openstack
 
 go 1.21.6
 

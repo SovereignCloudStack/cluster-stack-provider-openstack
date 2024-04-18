@@ -75,7 +75,7 @@ COPY local_cso.yaml /local_cso.yaml
 
 def deploy_cso():
     version = settings.get("cso_version")
-    cso_uri = "https://github.com/sovereignCloudStack/cluster-stack-operator/releases/download/{}/cso-infrastructure-components.yaml".format(version)
+    cso_uri = "https://github.com/SovereignCloudStack/cluster-stack-operator/releases/download/{}/cso-infrastructure-components.yaml".format(version)
     cmd = "curl -sSL {} | {} | kubectl apply -f -".format(cso_uri, envsubst_cmd)
     local(cmd, quiet = True)
 
