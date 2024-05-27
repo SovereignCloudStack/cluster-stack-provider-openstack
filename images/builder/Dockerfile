@@ -24,19 +24,19 @@ FROM docker.io/hadolint/hadolint:v2.12.0-alpine@sha256:7dba9a9f1a0350f6d021fb2f6
 FROM cgr.dev/chainguard/wolfi-base:latest as wolfi
 
 # update: datasource=github-tags depName=kubernetes-sigs/cluster-api
-ENV CLUSTERCTL_VERSION="v1.6.3"
+ENV CLUSTERCTL_VERSION="v1.7.2"
 # update: datasource=github-tags depName=golangci/golangci-lint
-ENV GOLANGCI_VERSION="v1.57.2"
+ENV GOLANGCI_VERSION="v1.59.0"
 # update: datasource=github-tags depName=kubernetes-sigs/kind
-ENV KIND_VERSION="v0.22.0"
+ENV KIND_VERSION="v0.23.0"
 # update: datasource=github-tags depName=kubernetes/kubernetes
 ARG KUBECTL_VERSION="v1.27.3"
 # update: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize\/v(?<version>.+)$
 ENV KUSTOMIZE_VERSION="v5.3.0"
 # update: datasource=github-tags depName=aquasecurity/trivy
-ENV TRIVY_VERSION="v0.49.1"
+ENV TRIVY_VERSION="v0.51.4"
 # update: datasource=github-tags depName=kubernetes-sigs/controller-tools
-ENV CONTROLLER_GEN_VERSION="v0.14.0"
+ENV CONTROLLER_GEN_VERSION="v0.15.0"
 
 # hadolint ignore=DL3018
 RUN apk add -U --no-cache \
