@@ -21,10 +21,10 @@ import (
 	"time"
 
 	githubclient "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client"
+	"github.com/SovereignCloudStack/cluster-stack-provider-openstack/internal/controller"
+	"github.com/SovereignCloudStack/cluster-stack-provider-openstack/internal/test/helpers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/sovereignCloudStack/cluster-stack-provider-openstack/internal/controller"
-	"github.com/sovereignCloudStack/cluster-stack-provider-openstack/internal/test/helpers"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 

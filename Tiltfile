@@ -24,7 +24,7 @@ settings = {
     "capi_version": "v1.6.0",
     "cso_version": "v0.1.0-alpha.5",
     "capo_version": "v0.9.0",
-    "cert_manager_version": "v1.13.1",
+    "cert_manager_version": "v1.13.2",
     "kustomize_substitutions": {
     },
 }
@@ -75,7 +75,7 @@ COPY local_cso.yaml /local_cso.yaml
 
 def deploy_cso():
     version = settings.get("cso_version")
-    cso_uri = "https://github.com/sovereignCloudStack/cluster-stack-operator/releases/download/{}/cso-infrastructure-components.yaml".format(version)
+    cso_uri = "https://github.com/SovereignCloudStack/cluster-stack-operator/releases/download/{}/cso-infrastructure-components.yaml".format(version)
     cmd = "curl -sSL {} | {} | kubectl apply -f -".format(cso_uri, envsubst_cmd)
     local(cmd, quiet = True)
 
@@ -320,7 +320,7 @@ include_user_tilt_files()
 load("ext://cert_manager", "deploy_cert_manager")
 
 if settings.get("deploy_cert_manager"):
-    deploy_cert_manager()
+    deploy_cert_manager(version=settings.get("cert_manager_version"))
 
 if settings.get("deploy_observability"):
     deploy_observability()
