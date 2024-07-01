@@ -9,15 +9,15 @@ require (
 	github.com/google/go-github/v52 v52.0.0
 	github.com/gophercloud/gophercloud/v2 v2.0.0-beta.2
 	github.com/gophercloud/utils/v2 v2.0.0-20240305212012-b57aefba4cdb
-	github.com/onsi/ginkgo/v2 v2.17.1
-	github.com/onsi/gomega v1.32.0
+	github.com/onsi/ginkgo/v2 v2.19.0
+	github.com/onsi/gomega v1.33.1
 	github.com/stretchr/testify v1.9.0
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4
-	k8s.io/klog/v2 v2.120.1
+	k8s.io/klog/v2 v2.130.1
 	sigs.k8s.io/cluster-api v1.6.0
-	sigs.k8s.io/cluster-api-provider-openstack v0.9.0
+	sigs.k8s.io/cluster-api-provider-openstack v0.10.3
 	sigs.k8s.io/controller-runtime v0.16.5
 	sigs.k8s.io/yaml v1.4.0
 )
