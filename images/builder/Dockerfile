@@ -17,16 +17,16 @@
 # If you make changes to this Dockerfile run `make builder-image-push`.
 
 # Install Lychee
-FROM docker.io/lycheeverse/lychee:0.14.3 as lychee
+FROM docker.io/lycheeverse/lychee:0.15.1 as lychee
 # Install Hadolint
 FROM docker.io/hadolint/hadolint:v2.12.0-alpine@sha256:7dba9a9f1a0350f6d021fb2f6f88900998a4fb0aaf8e4330aa8c38544f04db42 as hadolint
 
 FROM cgr.dev/chainguard/wolfi-base:latest as wolfi
 
 # update: datasource=github-tags depName=kubernetes-sigs/cluster-api
-ENV CLUSTERCTL_VERSION="v1.7.2"
+ENV CLUSTERCTL_VERSION="v1.7.3"
 # update: datasource=github-tags depName=golangci/golangci-lint
-ENV GOLANGCI_VERSION="v1.59.0"
+ENV GOLANGCI_VERSION="v1.59.1"
 # update: datasource=github-tags depName=kubernetes-sigs/kind
 ENV KIND_VERSION="v0.23.0"
 # update: datasource=github-tags depName=kubernetes/kubernetes
@@ -34,7 +34,7 @@ ARG KUBECTL_VERSION="v1.27.3"
 # update: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize\/v(?<version>.+)$
 ENV KUSTOMIZE_VERSION="v5.3.0"
 # update: datasource=github-tags depName=aquasecurity/trivy
-ENV TRIVY_VERSION="v0.51.4"
+ENV TRIVY_VERSION="v0.52.2"
 # update: datasource=github-tags depName=kubernetes-sigs/controller-tools
 ENV CONTROLLER_GEN_VERSION="v0.15.0"
 
