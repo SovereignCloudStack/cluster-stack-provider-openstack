@@ -18,12 +18,13 @@ github.com/ProtonMail/go-crypto/openpgp/internal/ecc
 github.com/ProtonMail/go-crypto/openpgp/internal/encoding
 github.com/ProtonMail/go-crypto/openpgp/packet
 github.com/ProtonMail/go-crypto/openpgp/s2k
-# github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.6
+# github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.6.0.20240828081204-d479eab19273
 ## explicit; go 1.21
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/fake
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/github
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/mocks
+github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/oci
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/clusterstack
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/kubernetesversion
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/release
@@ -234,6 +235,13 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
+# github.com/opencontainers/go-digest v1.0.0
+## explicit; go 1.13
+github.com/opencontainers/go-digest
+# github.com/opencontainers/image-spec v1.1.0
+## explicit; go 1.18
+github.com/opencontainers/image-spec/specs-go
+github.com/opencontainers/image-spec/specs-go/v1
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
@@ -311,6 +319,10 @@ golang.org/x/net/idna
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
+# golang.org/x/sync v0.7.0
+## explicit; go 1.18
+golang.org/x/sync/errgroup
+golang.org/x/sync/semaphore
 # golang.org/x/sys v0.20.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
@@ -698,6 +710,34 @@ k8s.io/utils/pointer
 k8s.io/utils/ptr
 k8s.io/utils/strings/slices
 k8s.io/utils/trace
+# oras.land/oras-go/v2 v2.5.0
+## explicit; go 1.21
+oras.land/oras-go/v2
+oras.land/oras-go/v2/content
+oras.land/oras-go/v2/content/file
+oras.land/oras-go/v2/errdef
+oras.land/oras-go/v2/internal/cas
+oras.land/oras-go/v2/internal/container/set
+oras.land/oras-go/v2/internal/copyutil
+oras.land/oras-go/v2/internal/descriptor
+oras.land/oras-go/v2/internal/docker
+oras.land/oras-go/v2/internal/graph
+oras.land/oras-go/v2/internal/httputil
+oras.land/oras-go/v2/internal/interfaces
+oras.land/oras-go/v2/internal/ioutil
+oras.land/oras-go/v2/internal/manifestutil
+oras.land/oras-go/v2/internal/platform
+oras.land/oras-go/v2/internal/registryutil
+oras.land/oras-go/v2/internal/resolver
+oras.land/oras-go/v2/internal/spec
+oras.land/oras-go/v2/internal/status
+oras.land/oras-go/v2/internal/syncutil
+oras.land/oras-go/v2/registry
+oras.land/oras-go/v2/registry/remote
+oras.land/oras-go/v2/registry/remote/auth
+oras.land/oras-go/v2/registry/remote/errcode
+oras.land/oras-go/v2/registry/remote/internal/errutil
+oras.land/oras-go/v2/registry/remote/retry
 # sigs.k8s.io/cluster-api v1.7.2
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api/api/v1beta1

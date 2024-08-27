@@ -62,6 +62,21 @@ spec:
             secretKeyRef:
               name: cspo-cluster-stack-variables
               key: git-access-token
+        - name: OCI_REGISTRY
+          valueFrom:
+            secretKeyRef:
+              name: cso-cluster-stack-variables
+              key: oci-registry
+        - name: OCI_REPOSITORY
+          valueFrom:
+            secretKeyRef:
+              name: cso-cluster-stack-variables
+              key: oci-repository
+        - name: OCI_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: cso-cluster-stack-variables
+              key: oci-access-token
         image: controller:latest
         name: manager
         securityContext:

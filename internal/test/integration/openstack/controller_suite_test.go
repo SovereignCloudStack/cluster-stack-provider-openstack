@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	githubclient "github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/github"
 	"github.com/SovereignCloudStack/cluster-stack-provider-openstack/internal/controller"
 	"github.com/SovereignCloudStack/cluster-stack-provider-openstack/internal/test/helpers"
 	. "github.com/onsi/ginkgo/v2"
@@ -50,7 +49,7 @@ var _ = BeforeSuite(func() {
 
 	Expect((&controller.OpenStackClusterStackReleaseReconciler{
 		Client:              testEnv.Manager.GetClient(),
-		AssetsClientFactory: githubclient.NewFactory(),
+		AssetsClientFactory: testEnv.AssetsClientFactory,
 		ReleaseDirectory:    "./../../../../test/releases",
 	}).SetupWithManager(testEnv.Manager)).To(Succeed())
 

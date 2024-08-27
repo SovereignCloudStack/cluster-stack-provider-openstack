@@ -494,7 +494,7 @@ generate-modules-ci: generate-modules
 KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env --bin-dir $(abspath $(TOOLS_BIN_DIR)) -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 
 .PHONY: test-integration ## Run integration tests
-test-integration: test-integration-github test-integration-openstack
+test-integration: test-integration-openstack test-integration-github test-integration-oci
 	echo done
 
 .PHONY: test-unit
@@ -512,6 +512,12 @@ test-integration-github: $(SETUP_ENVTEST) $(GOTESTSUM)
 	@mkdir -p $(shell pwd)/.coverage
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GOTESTSUM) --junitfile=.coverage/junit.xml --format testname -- -mod=vendor \
 	-covermode=atomic -coverprofile=.coverage/cover.out -p=1  ./internal/test/integration/github/...
+
+.PHONY: test-integration-oci
+test-integration-oci: $(SETUP_ENVTEST) $(GOTESTSUM)
+	@mkdir -p $(shell pwd)/.coverage
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GOTESTSUM) --junitfile=.coverage/junit.xml --format testname -- -mod=vendor \
+	-covermode=atomic -coverprofile=.coverage/cover.out -p=1  ./internal/test/integration/oci/...
 
 .PHONY: test-integration-openstack
 test-integration-openstack: $(SETUP_ENVTEST) $(GOTESTSUM)
