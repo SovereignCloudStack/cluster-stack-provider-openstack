@@ -24,8 +24,8 @@ import (
 	"path/filepath"
 	goruntime "runtime"
 
-	githubclient "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client"
-	githubmocks "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client/mocks"
+	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient"
+	assetsclientmocks "github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/mocks"
 	cspov1alpha1 "github.com/SovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	g "github.com/onsi/ginkgo/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -95,8 +95,8 @@ type (
 		client.Client
 		Config              *rest.Config
 		cancel              context.CancelFunc
-		GitHubClientFactory githubclient.Factory
-		GitHubClient        *githubmocks.Client
+		AssetsClientFactory assetsclient.Factory
+		AssetsClient        *assetsclientmocks.Client
 	}
 )
 
@@ -127,14 +127,14 @@ func NewTestEnvironment() *TestEnvironment {
 		klog.Fatalf("unable to create manager pod namespace: %s", err)
 	}
 
-	githubClient := &githubmocks.Client{}
+	assetsClient := &assetsclientmocks.Client{}
 
 	testEnv := &TestEnvironment{
 		Manager:             mgr,
 		Client:              mgr.GetClient(),
 		Config:              mgr.GetConfig(),
-		GitHubClientFactory: githubmocks.NewGitHubFactory(githubClient),
-		GitHubClient:        githubClient,
+		AssetsClientFactory: assetsclientmocks.NewAssetsClientFactory(assetsClient),
+		AssetsClient:        assetsClient,
 	}
 
 	return testEnv

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
     control-plane: cso-controller-manager
   name: cso-system
 ---
@@ -10,9 +10,9 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
     cluster.x-k8s.io/v1beta1: v1beta1
   name: clusteraddons.clusterstack.x-k8s.io
 spec:
@@ -21,12 +21,18 @@ spec:
     kind: ClusterAddon
     listKind: ClusterAddonList
     plural: clusteraddons
+    shortNames:
+    - caddon
     singular: clusteraddon
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .metadata.ownerReferences[?(@.kind=="Cluster")].name
       name: Cluster
+      type: string
+    - description: Present running hook
+      jsonPath: .spec.hook
+      name: Hook
       type: string
     - jsonPath: .status.ready
       name: Ready
@@ -47,14 +53,19 @@ spec:
         description: ClusterAddon is the schema for the clusteraddons API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -63,49 +74,58 @@ spec:
               object.
             properties:
               clusterRef:
-                description: ClusterRef is the reference to the clusterv1.Cluster
-                  object that corresponds to the workload cluster where this controller
-                  applies the cluster addons.
+                description: |-
+                  ClusterRef is the reference to the clusterv1.Cluster object that corresponds to the workload cluster where this
+                  controller applies the cluster addons.
                 properties:
                   apiVersion:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
+                      TODO: this design is not final and this field is subject to change in the future.
                     type: string
                   kind:
-                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                     type: string
                   uid:
-                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
               clusterStack:
-                description: ClusterStack is the full string <provider>-<name>-<Kubernetes
-                  version>-<version> that will be filled with the cluster stack that
-                  the respective cluster uses currently. It always matches cluster.spec.topology.class
-                  if the work of this controller is done.
+                description: |-
+                  ClusterStack is the full string <provider>-<name>-<Kubernetes version>-<version> that will be filled with the cluster stack that
+                  the respective cluster uses currently. It always matches cluster.spec.topology.class if the work of this controller is done.
+                type: string
+              hook:
+                description: Hook specifies the runtime hook for the Cluster event.
                 type: string
               version:
                 description: Version is the version of the cluster addons that have
@@ -124,37 +144,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -196,6 +216,25 @@ spec:
                       type: string
                   type: object
                 type: array
+              stages:
+                description: Stages shows the state of all stages in the current running
+                  hook.
+                items:
+                  description: StageStatus represents the helm charts of the hook
+                    and it's phases.
+                  properties:
+                    action:
+                      description: Action is the action of the helm chart. e.g. -
+                        apply and delete.
+                      type: string
+                    name:
+                      description: Name represent name of the helm chart
+                      type: string
+                    phase:
+                      description: Phase is the current phase of the helm chart.
+                      type: string
+                  type: object
+                type: array
             type: object
         type: object
     served: true
@@ -207,9 +246,9 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
     cluster.x-k8s.io/v1beta1: v1beta1
   name: clusterstackreleases.clusterstack.x-k8s.io
 spec:
@@ -218,6 +257,8 @@ spec:
     kind: ClusterStackRelease
     listKind: ClusterStackReleaseList
     plural: clusterstackreleases
+    shortNames:
+    - cskr
     singular: clusterstackrelease
   scope: Namespaced
   versions:
@@ -245,14 +286,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -260,41 +306,48 @@ spec:
             description: ClusterStackReleaseSpec defines the desired state of ClusterStackRelease.
             properties:
               providerRef:
-                description: ProviderRef specifies the reference to the ProviderClusterStackRelease
-                  object. It has to be set only if the object exists, i.e. if the
-                  noProvider mode is turned off.
+                description: |-
+                  ProviderRef specifies the reference to the ProviderClusterStackRelease object.
+                  It has to be set only if the object exists, i.e. if the noProvider mode is turned off.
                 properties:
                   apiVersion:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
+                      TODO: this design is not final and this field is subject to change in the future.
                     type: string
                   kind:
-                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                     type: string
                   uid:
-                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
@@ -309,37 +362,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -348,9 +401,9 @@ spec:
                   type: object
                 type: array
               kubernetesVersion:
-                description: KubernetesVersion is the Kubernetes version incl. patch
-                  version, e.g. 1.26.6. The controller fetches the version from the
-                  release assets of the cluster stack.
+                description: |-
+                  KubernetesVersion is the Kubernetes version incl. patch version, e.g. 1.26.6.
+                  The controller fetches the version from the release assets of the cluster stack.
                 type: string
               ready:
                 default: false
@@ -397,9 +450,9 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
     cluster.x-k8s.io/v1beta1: v1beta1
   name: clusterstacks.clusterstack.x-k8s.io
 spec:
@@ -408,6 +461,8 @@ spec:
     kind: ClusterStack
     listKind: ClusterStackList
     plural: clusterstacks
+    shortNames:
+    - csk
     singular: clusterstack
   scope: Namespaced
   versions:
@@ -449,14 +504,19 @@ spec:
         description: ClusterStack is the Schema for the clusterstacks API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -502,42 +562,48 @@ spec:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
+                      TODO: this design is not final and this field is subject to change in the future.
                     type: string
                   kind:
-                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                     type: string
                   uid:
-                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
               versions:
-                description: Versions is a list of version of the cluster stack that
-                  should be available in the management cluster. A version has to
-                  have the format 'v<versionNumber>', e.g. v1 for stable channel or,
-                  v1-alpha.1 for alpha channel. The versions have to correspond to
-                  the channel property.
+                description: |-
+                  Versions is a list of version of the cluster stack that should be available in the management cluster.
+                  A version has to have the format 'v<versionNumber>', e.g. v1 for stable channel or, v1-alpha.1 for alpha channel.
+                  The versions have to correspond to the channel property.
                 items:
                   type: string
                 type: array
@@ -557,37 +623,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -631,7 +697,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
   name: cso-controller-manager
   namespace: cso-system
 ---
@@ -639,7 +705,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
   name: cso-leader-election-role
   namespace: cso-system
 rules:
@@ -679,7 +745,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
   name: cso-manager-role
 rules:
 - apiGroups:
@@ -816,7 +882,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
   name: cso-leader-election-rolebinding
   namespace: cso-system
 roleRef:
@@ -832,7 +898,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
   name: cso-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -843,11 +909,41 @@ subjects:
   name: cso-controller-manager
   namespace: cso-system
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    cluster.x-k8s.io/provider: cluster-stack-operator
+  name: cso-hook-server-svc
+  namespace: cso-system
+spec:
+  ports:
+  - port: 443
+    targetPort: 9442
+  selector:
+    cluster.x-k8s.io/provider: cluster-stack-operator
+    control-plane: cso-controller-manager
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    cluster.x-k8s.io/provider: cluster-stack-operator
+  name: cso-webhook-service
+  namespace: cso-system
+spec:
+  ports:
+  - port: 443
+    targetPort: 9443
+  selector:
+    cluster.x-k8s.io/provider: cluster-stack-operator
+    control-plane: cso-controller-manager
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
     control-plane: cso-controller-manager
   name: cso-controller-manager
   namespace: cso-system
@@ -855,14 +951,14 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+      cluster.x-k8s.io/provider: cluster-stack-operator
       control-plane: cso-controller-manager
   template:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
       labels:
-        cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+        cluster.x-k8s.io/provider: cluster-stack-operator
         control-plane: cso-controller-manager
     spec:
       containers:
@@ -871,7 +967,7 @@ spec:
         - --local=true
         command:
         - /manager
-        image: ghcr.io/sovereigncloudstack/cso-test:v0.1.0-alpha.5
+        image: ghcr.io/sovereigncloudstack/cso-test:v0.1.0-alpha.6
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3
@@ -884,6 +980,12 @@ spec:
           timeoutSeconds: 1
         name: manager
         ports:
+        - containerPort: 9442
+          name: hook-server-svc
+          protocol: TCP
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
         - containerPort: 9440
           name: healthz
           protocol: TCP
@@ -903,23 +1005,58 @@ spec:
           requests:
             cpu: 200m
             memory: 250Mi
+        volumeMounts:
+        - mountPath: /tmp/k8s-hook-server/serving-certs
+          name: hook-server-cert
+          readOnly: true
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
       serviceAccountName: cso-controller-manager
       terminationGracePeriodSeconds: 10
       tolerations:
       - effect: NoSchedule
         key: node-role.kubernetes.io/control-plane
+      volumes:
+      - name: hook-server-cert
+        secret:
+          defaultMode: 420
+          secretName: cso-hook-server-server-cert
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: cso-webhook-server-cert
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
+  name: cso-hook-server-server-cert
+  namespace: cso-system
+spec:
+  dnsNames:
+  - cso-hook-server-svc.cso-system.svc
+  - cso-hook-server-svc.cso-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: cso-selfsigned-issuer
+  secretName: cso-hook-server-server-cert
+  subject:
+    organizations:
+    - k8s-sig-cluster-lifecycle
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  labels:
+    cluster.x-k8s.io/provider: cluster-stack-operator
   name: cso-serving-cert
   namespace: cso-system
 spec:
   dnsNames:
-  - $(SERVICE_NAME).$(SERVICE_NAMESPACE).svc
-  - $(SERVICE_NAME).$(SERVICE_NAMESPACE).svc.cluster.local
+  - cso-webhook-service.cso-system.svc
+  - cso-webhook-service.cso-system.svc.cluster.local
   issuerRef:
     kind: Issuer
     name: cso-selfsigned-issuer
@@ -932,8 +1069,119 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   labels:
-    cluster.x-k8s.io/provider: infrastructure-cluster-stack-operator
+    cluster.x-k8s.io/provider: cluster-stack-operator
   name: cso-selfsigned-issuer
   namespace: cso-system
 spec:
   selfSigned: {}
+---
+apiVersion: runtime.cluster.x-k8s.io/v1alpha1
+kind: ExtensionConfig
+metadata:
+  annotations:
+    runtime.cluster.x-k8s.io/inject-ca-from-secret: cso-system/cso-hook-server-server-cert
+  labels:
+    cluster.x-k8s.io/provider: cluster-stack-operator
+  name: cso-hook-server-extensionconfig
+  namespace: cso-system
+spec:
+  clientConfig:
+    service:
+      name: cso-hook-server-svc
+      namespace: cso-system
+      port: 443
+  namespaceSelector: {}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: cso-system/cso-serving-cert
+  labels:
+    cluster.x-k8s.io/provider: cluster-stack-operator
+  name: cso-validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: cso-webhook-service
+      namespace: cso-system
+      path: /validate-cluster-x-k8s-io-v1beta1-cluster
+  failurePolicy: Fail
+  name: validation.cluster.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1alpha1
+  clientConfig:
+    service:
+      name: cso-webhook-service
+      namespace: cso-system
+      path: /validate-clusterstack-x-k8s-io-v1alpha1-clusteraddon
+  failurePolicy: Fail
+  name: validation.clusteraddon.clusterstack.x-k8s.io
+  rules:
+  - apiGroups:
+    - clusterstack.x-k8s.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusteraddons
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1alpha1
+  clientConfig:
+    service:
+      name: cso-webhook-service
+      namespace: cso-system
+      path: /validate-clusterstack-x-k8s-io-v1alpha1-clusterstack
+  failurePolicy: Fail
+  name: validation.clusterstack.clusterstack.x-k8s.io
+  rules:
+  - apiGroups:
+    - clusterstack.x-k8s.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - clusterstacks
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1alpha1
+  clientConfig:
+    service:
+      name: cso-webhook-service
+      namespace: cso-system
+      path: /validate-clusterstack-x-k8s-io-v1alpha1-clusterstackrelease
+  failurePolicy: Fail
+  name: validation.clusterstackrelease.clusterstack.x-k8s.io
+  rules:
+  - apiGroups:
+    - clusterstack.x-k8s.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - DELETE
+    resources:
+    - clusterstackreleases
+  sideEffects: None
