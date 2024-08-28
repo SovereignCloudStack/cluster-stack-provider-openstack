@@ -31,7 +31,7 @@ ENV GOLANGCI_VERSION="v1.59.1"
 ENV KIND_VERSION="v0.23.0"
 # update: datasource=github-tags depName=kubernetes/kubernetes
 ARG KUBECTL_VERSION="v1.27.3"
-# update: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize\/v(?<version>.+)$
+# update: datasource=github-tags depName=kubernetes-sigs/kustomize
 ENV KUSTOMIZE_VERSION="v5.3.0"
 # update: datasource=github-tags depName=aquasecurity/trivy
 ENV TRIVY_VERSION="v0.52.2"
