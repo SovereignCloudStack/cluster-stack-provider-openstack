@@ -2,6 +2,7 @@ export PATH="$(pwd)/hack/tools/bin/:$PATH"
 export KUBECONFIG=$PWD/.mgt-cluster-kubeconfig.yaml
 export CLUSTER_TOPOLOGY=true
 export EXP_RUNTIME_SDK=true
+export EXP_CLUSTER_RESOURCE_SET=true
 export CLUSTER_NAME=test-dfkhje
 export SECRET_NAME=supersecret
 export CLOUD_NAME=test
