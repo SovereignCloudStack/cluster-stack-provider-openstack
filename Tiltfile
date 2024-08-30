@@ -23,7 +23,7 @@ settings = {
     "kind_cluster_name": "cspo",
     "capi_version": "v1.6.0",
     "cso_version": "v0.1.0-alpha.6",
-    "capo_version": "v0.9.0",
+    "capo_version": "v0.10.4",
     "cert_manager_version": "v1.13.2",
     "kustomize_substitutions": {
     },
