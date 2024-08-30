@@ -77,6 +77,16 @@ spec:
             secretKeyRef:
               name: cspo-cluster-stack-variables
               key: oci-access-token
+        - name: OCI_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: cspo-cluster-stack-variables
+              key: oci-username
+        - name: OCI_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cspo-cluster-stack-variables
+              key: oci-password
         image: controller:latest
         name: manager
         securityContext:
