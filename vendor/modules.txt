@@ -18,7 +18,7 @@ github.com/ProtonMail/go-crypto/openpgp/internal/ecc
 github.com/ProtonMail/go-crypto/openpgp/internal/encoding
 github.com/ProtonMail/go-crypto/openpgp/packet
 github.com/ProtonMail/go-crypto/openpgp/s2k
-# github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.6.0.20240828081204-d479eab19273
+# github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.6.0.20240903090140-7bf22037ef1f
 ## explicit; go 1.21
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient
 github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/fake

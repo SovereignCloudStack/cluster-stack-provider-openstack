@@ -84,7 +84,7 @@ func (c *realGhClient) ListRelease(ctx context.Context) ([]string, error) {
 	releases := []string{}
 
 	for _, release := range repoRelease {
-		releases = append(releases, *release.Name)
+		releases = append(releases, *release.TagName)
 	}
 
 	return releases, nil

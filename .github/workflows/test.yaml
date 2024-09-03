@@ -64,8 +64,6 @@ jobs:
           ENCODED_CLOUDS_YAML: ${{ secrets.ENCODED_CLOUDS_YAML }}
           OCI_REGISTRY: registry.dnation.cloud
           OCI_REPOSITORY: registry.dnation.cloud/csctl-oci/openstack
-          OCI_USERNAME: ${{ secrets.OCI_USERNAME }}
-          OCI_PASSWORD: ${{ secrets.OCI_PASSWORD }}
         run: make test-integration
 
         # - name: Create Report

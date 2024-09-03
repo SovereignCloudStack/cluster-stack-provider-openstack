@@ -5,7 +5,7 @@ go 1.21.6
 toolchain go1.22.1
 
 require (
-	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.6.0.20240828081204-d479eab19273
+	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.6.0.20240903090140-7bf22037ef1f
 	github.com/gophercloud/gophercloud/v2 v2.0.0-beta.2
 	github.com/gophercloud/utils/v2 v2.0.0-20240305212012-b57aefba4cdb
 	github.com/onsi/ginkgo/v2 v2.19.0
