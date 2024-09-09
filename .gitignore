@@ -72,3 +72,5 @@ tmp_*
 .cspotemplate.yaml
 .secret.yaml
 .release
+
+.config
