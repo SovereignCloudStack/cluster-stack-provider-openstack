@@ -89,7 +89,7 @@ export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.28.0
 CONTROLLER_GEN := $(abspath $(TOOLS_BIN_DIR)/controller-gen)
 controller-gen: $(CONTROLLER_GEN) ## Build a local copy of controller-gen
 $(CONTROLLER_GEN): # Build controller-gen from tools folder.
-	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.14.0
+	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.2
 
 KUSTOMIZE := $(abspath $(TOOLS_BIN_DIR)/kustomize)
 kustomize: $(KUSTOMIZE) ## Build a local copy of kustomize
@@ -338,7 +338,7 @@ ifeq ($(BUILD_IN_CONTAINER),true)
 else
 	go version
 	golangci-lint version
-	golangci-lint run -v --out-format=github-actions
+	golangci-lint run -v --out-format=colored-line-number
 endif
 
 .PHONY: lint-yaml

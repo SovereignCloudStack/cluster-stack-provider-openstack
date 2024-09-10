@@ -7,12 +7,12 @@ linters:
     - bodyclose
     - containedctx
     - contextcheck
+    - copyloopvar
     - durationcheck
     - errchkjson
     - errname
     - errorlint
     - exhaustive
-    - exportloopref
     - forcetypeassert
     - gci
     # - goconst
@@ -86,10 +86,6 @@ linters-settings:
     allow-unused: false
     allow-leading-space: false
     require-specific: true
-  staticcheck:
-    go: "1.21"
-  stylecheck:
-    go: "1.21"
     checks: ["all", "-ST1006"]
     dot-import-whitelist:
       - "github.com/onsi/gomega"
@@ -101,6 +97,9 @@ linters-settings:
       - performance
       - experimental
       - opinionated
+    settings:
+      hugeParam:
+        sizeThreshold: 120
   revive:
     enable-all-rules: true
     rules:
@@ -141,7 +140,14 @@ linters-settings:
         severity: warning
         disabled: false
         arguments:
-          - [ "call-chain", "loop", "method-call", "recover", "immediate-recover", "return"] # yamllint disable-line rule:line-length
+          - [
+            "call-chain",
+            "loop",
+            "method-call",
+            "recover",
+            "immediate-recover",
+            "return",
+          ] # yamllint disable-line rule:line-length
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#exported
       - name: exported
         severity: warning
@@ -224,7 +230,7 @@ linters-settings:
       - name: struct-tag
         disabled: true
   unused:
-    go: "1.21"
+    go: "1.22"
   usestdlibvars:
     # Suggest the use of http.MethodXX.
     # Default: true
@@ -285,10 +291,11 @@ issues:
     - linters:
         - wrapcheck
       path: _test\.go
+  exclude-dirs:
+    - vendor$
+
 run:
   timeout: 10m
-  go: "1.21"
+  go: "1.22"
   allow-parallel-runners: true
   modules-download-mode: vendor
-  skip-dirs:
-    - vendor$

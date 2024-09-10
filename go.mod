@@ -1,12 +1,11 @@
 module github.com/SovereignCloudStack/cluster-stack-provider-openstack
 
-go 1.21.6
+go 1.22
 
-toolchain go1.22.1
+toolchain go1.23.0
 
 require (
 	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.5
-	github.com/google/go-github/v52 v52.0.0
 	github.com/gophercloud/gophercloud/v2 v2.0.0-beta.2
 	github.com/gophercloud/utils/v2 v2.0.0-20240305212012-b57aefba4cdb
 	github.com/onsi/ginkgo/v2 v2.17.1
@@ -21,6 +20,8 @@ require (
 	sigs.k8s.io/controller-runtime v0.16.5
 	sigs.k8s.io/yaml v1.4.0
 )
+
+require github.com/google/go-github/v52 v52.0.0
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
