@@ -19,12 +19,15 @@ package main
 
 // Import packages including all Kubernetes client auth plugins: k8s.io/client-go/plugin/pkg/client/auth.
 import (
+	"errors"
 	"flag"
 	"os"
 	"time"
 
-	githubclient "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client"
-	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client/fake"
+	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient"
+	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/fake"
+	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/github"
+	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/oci"
 	apiv1alpha1 "github.com/SovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"github.com/SovereignCloudStack/cluster-stack-provider-openstack/internal/controller"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -53,6 +56,7 @@ var (
 	releaseDir           string
 	imageImportTimeout   int
 	localMode            bool
+	source               string
 	metricsAddr          string
 	enableLeaderElection bool
 	probeAddr            string
@@ -69,7 +73,8 @@ func main() {
 	)
 	flag.StringVar(&releaseDir, "release-dir", "/tmp/downloads/", "Specify release directory for cluster-stack releases")
 	flag.IntVar(&imageImportTimeout, "image-import-timeout", 0, "Maximum time in minutes that you allow cspo to import image. If image-import-timeout <= 0, cspo waits forever.")
-	flag.BoolVar(&localMode, "local", false, "Enable local mode where no release assets will be downloaded from a remote Git repository. Useful for implementing cluster stacks.")
+	flag.BoolVar(&localMode, "local", false, "Enable local mode where no release assets will be downloaded from a remote repository. Useful for implementing cluster stacks.")
+	flag.StringVar(&source, "source", "github", "Specifies the source from which release assets would be downloaded. Allowed sources are 'github' and 'oci'")
 
 	opts := zap.Options{
 		Development: true,
@@ -100,18 +105,26 @@ func main() {
 	// Initialize event recorder.
 	record.InitFromRecorder(mgr.GetEventRecorderFor("cspo-controller"))
 
-	var gitFactory githubclient.Factory
+	var assetsClientFactory assetsclient.Factory
 	if localMode {
-		gitFactory = fake.NewFactory()
+		assetsClientFactory = fake.NewFactory()
 	} else {
-		gitFactory = githubclient.NewFactory()
+		switch source {
+		case "oci":
+			assetsClientFactory = oci.NewFactory()
+		case "github":
+			assetsClientFactory = github.NewFactory()
+		default:
+			setupLog.Error(errors.New("invalid asset source"), "no valid source specified, allowed sources are 'github' and 'oci'")
+			os.Exit(1)
+		}
 	}
 
 	if err = (&controller.OpenStackClusterStackReleaseReconciler{
 		Client:              mgr.GetClient(),
 		Scheme:              mgr.GetScheme(),
 		ReleaseDirectory:    releaseDir,
-		GitHubClientFactory: gitFactory,
+		AssetsClientFactory: assetsClientFactory,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OpenStackClusterStackRelease")
 		os.Exit(1)

@@ -75,7 +75,6 @@ jobs:
           cache-from: type=gha, scope=${{ github.workflow }}
           cache-to: type=gha, mode=max, scope=${{ github.workflow }}
 
-
       - name: Sign Container Images
         run: |
           cosign sign --yes ghcr.io/sovereigncloudstack/cspo@${{ steps.docker_build_release_cspo.outputs.digest }}
@@ -140,11 +139,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install go
-        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
-        with:
-          go-version-file: "go.mod"
-          cache: true
-          cache-dependency-path: go.sum
+        uses: ./.github/actions/setup-go
 
       - name: install kustomize
         run: |

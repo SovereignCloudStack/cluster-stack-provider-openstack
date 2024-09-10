@@ -89,7 +89,7 @@ export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.28.0
 CONTROLLER_GEN := $(abspath $(TOOLS_BIN_DIR)/controller-gen)
 controller-gen: $(CONTROLLER_GEN) ## Build a local copy of controller-gen
 $(CONTROLLER_GEN): # Build controller-gen from tools folder.
-	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.14.0
+	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.2
 
 KUSTOMIZE := $(abspath $(TOOLS_BIN_DIR)/kustomize)
 kustomize: $(KUSTOMIZE) ## Build a local copy of kustomize
@@ -144,11 +144,11 @@ all-tools: get-dependencies $(GOTESTSUM) $(go-cover-treemap) $(go-binsize-treema
 
 env-vars-for-wl-cluster:
 ifeq ($(wildcard tilt-settings.yaml),)
-	@./hack/ensure-env-variables.sh GIT_PROVIDER_B64 GIT_ACCESS_TOKEN_B64 GIT_ORG_NAME_B64 GIT_REPOSITORY_NAME_B64 CLUSTER_TOPOLOGY CLUSTER_NAME SECRET_NAME CLOUD_NAME ENCODED_CLOUDS_YAML
+	@./hack/ensure-env-variables.sh GIT_PROVIDER_B64 GIT_ACCESS_TOKEN_B64 GIT_ORG_NAME_B64 GIT_REPOSITORY_NAME_B64 CLUSTER_TOPOLOGY EXP_RUNTIME_SDK CLUSTER_NAME SECRET_NAME CLOUD_NAME ENCODED_CLOUDS_YAML
 else ifeq ($(shell awk '/local_mode:/ {print tolower($$2)}' tilt-settings.yaml),true)
-	@./hack/ensure-env-variables.sh CLUSTER_TOPOLOGY CLUSTER_NAME SECRET_NAME CLOUD_NAME ENCODED_CLOUDS_YAML
+	@./hack/ensure-env-variables.sh CLUSTER_TOPOLOGY EXP_RUNTIME_SDK CLUSTER_NAME SECRET_NAME CLOUD_NAME ENCODED_CLOUDS_YAML
 else
-	@./hack/ensure-env-variables.sh GIT_PROVIDER_B64 GIT_ACCESS_TOKEN_B64 GIT_ORG_NAME_B64 GIT_REPOSITORY_NAME_B64 CLUSTER_TOPOLOGY CLUSTER_NAME SECRET_NAME CLOUD_NAME ENCODED_CLOUDS_YAML	
+	@./hack/ensure-env-variables.sh GIT_PROVIDER_B64 GIT_ACCESS_TOKEN_B64 GIT_ORG_NAME_B64 GIT_REPOSITORY_NAME_B64 CLUSTER_TOPOLOGY EXP_RUNTIME_SDK CLUSTER_NAME SECRET_NAME CLOUD_NAME ENCODED_CLOUDS_YAML
 endif
 
 .PHONY: cluster
@@ -338,7 +338,7 @@ ifeq ($(BUILD_IN_CONTAINER),true)
 else
 	go version
 	golangci-lint version
-	golangci-lint run -v --out-format=github-actions
+	golangci-lint run -v --out-format=colored-line-number
 endif
 
 .PHONY: lint-yaml
@@ -494,7 +494,7 @@ generate-modules-ci: generate-modules
 KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env --bin-dir $(abspath $(TOOLS_BIN_DIR)) -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 
 .PHONY: test-integration ## Run integration tests
-test-integration: test-integration-github test-integration-openstack
+test-integration: test-integration-openstack test-integration-github #test-integration-oci
 	echo done
 
 .PHONY: test-unit
@@ -512,6 +512,12 @@ test-integration-github: $(SETUP_ENVTEST) $(GOTESTSUM)
 	@mkdir -p $(shell pwd)/.coverage
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GOTESTSUM) --junitfile=.coverage/junit.xml --format testname -- -mod=vendor \
 	-covermode=atomic -coverprofile=.coverage/cover.out -p=1  ./internal/test/integration/github/...
+
+.PHONY: test-integration-oci
+test-integration-oci: $(SETUP_ENVTEST) $(GOTESTSUM)
+	@mkdir -p $(shell pwd)/.coverage
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GOTESTSUM) --junitfile=.coverage/junit.xml --format testname -- -mod=vendor \
+	-covermode=atomic -coverprofile=.coverage/cover.out -p=1  ./internal/test/integration/oci/...
 
 .PHONY: test-integration-openstack
 test-integration-openstack: $(SETUP_ENVTEST) $(GOTESTSUM)
