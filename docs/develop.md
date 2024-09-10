@@ -60,7 +60,7 @@ If you have any trouble finding the right command, then you can use `make help` 
 
 ## Toggle between local_mode and remote mode
 
-We can retrieve cluster-stacks in two modes. One way is to let the controller fetch it from GitHub which is remote mode and other is we mount the cluster-stacks inside the container at `/tmp/downloads/cluster-stacks` directory.
+We can retrieve cluster-stacks in two modes. One way is to let the controller fetch it from repository which is remote mode and other is we mount the cluster-stacks inside the container at `/tmp/downloads/cluster-stacks` directory.
 
 > [!NOTE]  
 > Using remote mode is the default behavior.
