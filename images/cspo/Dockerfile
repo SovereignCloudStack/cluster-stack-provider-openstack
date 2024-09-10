@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/root/.cache --mount=type=cache,target=/go/pkg \
     go build -mod=vendor -trimpath -ldflags "-s -w ${LDFLAGS} -extldflags '-static'" \
     -o manager cmd/main.go
 
-FROM --platform=${BUILDPLATFORM} docker.io/library/alpine:3.20.2
+FROM --platform=${BUILDPLATFORM} docker.io/library/alpine:3.20.3
 WORKDIR /
 COPY --from=build /src/cluster-stack-provider-openstack/manager .
 
