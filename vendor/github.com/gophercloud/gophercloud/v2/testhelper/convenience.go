@@ -24,23 +24,25 @@ func prefix(depth int) string {
 	return fmt.Sprintf("Failure in %s, line %d:", filepath.Base(file), line)
 }
 
-func green(str interface{}) string {
+func green(str any) string {
 	return fmt.Sprintf("%s%#v%s", greenCode, str, resetCode)
 }
 
-func yellow(str interface{}) string {
+func yellow(str any) string {
 	return fmt.Sprintf("%s%#v%s", yellowCode, str, resetCode)
 }
 
 func logFatal(t *testing.T, str string) {
+	t.Helper()
 	t.Fatalf(logBodyFmt, prefix(3), str)
 }
 
 func logError(t *testing.T, str string) {
+	t.Helper()
 	t.Errorf(logBodyFmt, prefix(3), str)
 }
 
-type diffLogger func([]string, interface{}, interface{})
+type diffLogger func([]string, any, any)
 
 type visit struct {
 	a1  uintptr
@@ -55,7 +57,7 @@ func deepDiffEqual(expected, actual reflect.Value, visited map[visit]bool, path 
 	defer func() {
 		// Fall back to the regular reflect.DeepEquals function.
 		if r := recover(); r != nil {
-			var e, a interface{}
+			var e, a any
 			if expected.IsValid() {
 				e = expected.Interface()
 			}
@@ -195,7 +197,7 @@ func deepDiffEqual(expected, actual reflect.Value, visited map[visit]bool, path 
 	}
 }
 
-func deepDiff(expected, actual interface{}, logDifference diffLogger) {
+func deepDiff(expected, actual any, logDifference diffLogger) {
 	if expected == nil || actual == nil {
 		logDifference([]string{}, expected, actual)
 		return
@@ -213,14 +215,18 @@ func deepDiff(expected, actual interface{}, logDifference diffLogger) {
 
 // AssertEquals compares two arbitrary values and performs a comparison. If the
 // comparison fails, a fatal error is raised that will fail the test
-func AssertEquals(t *testing.T, expected, actual interface{}) {
+func AssertEquals(t *testing.T, expected, actual any) {
+	t.Helper()
+
 	if expected != actual {
 		logFatal(t, fmt.Sprintf("expected %s but got %s", green(expected), yellow(actual)))
 	}
 }
 
 // CheckEquals is similar to AssertEquals, except with a non-fatal error
-func CheckEquals(t *testing.T, expected, actual interface{}) {
+func CheckEquals(t *testing.T, expected, actual any) {
+	t.Helper()
+
 	if expected != actual {
 		logError(t, fmt.Sprintf("expected %s but got %s", green(expected), yellow(actual)))
 	}
@@ -228,11 +234,13 @@ func CheckEquals(t *testing.T, expected, actual interface{}) {
 
 // AssertDeepEquals - like Equals - performs a comparison - but on more complex
 // structures that requires deeper inspection
-func AssertDeepEquals(t *testing.T, expected, actual interface{}) {
+func AssertDeepEquals(t *testing.T, expected, actual any) {
+	t.Helper()
+
 	pre := prefix(2)
 
 	differed := false
-	deepDiff(expected, actual, func(path []string, expected, actual interface{}) {
+	deepDiff(expected, actual, func(path []string, expected, actual any) {
 		differed = true
 		t.Errorf("\033[1;31m%sat %s expected %s, but got %s\033[0m",
 			pre,
@@ -246,10 +254,12 @@ func AssertDeepEquals(t *testing.T, expected, actual interface{}) {
 }
 
 // CheckDeepEquals is similar to AssertDeepEquals, except with a non-fatal error
-func CheckDeepEquals(t *testing.T, expected, actual interface{}) {
+func CheckDeepEquals(t *testing.T, expected, actual any) {
+	t.Helper()
+
 	pre := prefix(2)
 
-	deepDiff(expected, actual, func(path []string, expected, actual interface{}) {
+	deepDiff(expected, actual, func(path []string, expected, actual any) {
 		t.Errorf("\033[1;31m%s at %s expected %s, but got %s\033[0m",
 			pre,
 			strings.Join(path, ""),
@@ -258,28 +268,32 @@ func CheckDeepEquals(t *testing.T, expected, actual interface{}) {
 	})
 }
 
-func isByteArrayEquals(t *testing.T, expectedBytes []byte, actualBytes []byte) bool {
+func isByteArrayEquals(expectedBytes []byte, actualBytes []byte) bool {
 	return bytes.Equal(expectedBytes, actualBytes)
 }
 
 // AssertByteArrayEquals a convenience function for checking whether two byte arrays are equal
 func AssertByteArrayEquals(t *testing.T, expectedBytes []byte, actualBytes []byte) {
-	if !isByteArrayEquals(t, expectedBytes, actualBytes) {
+	t.Helper()
+
+	if !isByteArrayEquals(expectedBytes, actualBytes) {
 		logFatal(t, "The bytes differed.")
 	}
 }
 
 // CheckByteArrayEquals a convenience function for silent checking whether two byte arrays are equal
 func CheckByteArrayEquals(t *testing.T, expectedBytes []byte, actualBytes []byte) {
-	if !isByteArrayEquals(t, expectedBytes, actualBytes) {
+	t.Helper()
+
+	if !isByteArrayEquals(expectedBytes, actualBytes) {
 		logError(t, "The bytes differed.")
 	}
 }
 
 // isJSONEquals is a utility function that implements JSON comparison for AssertJSONEquals and
 // CheckJSONEquals.
-func isJSONEquals(t *testing.T, expectedJSON string, actual interface{}) bool {
-	var parsedExpected, parsedActual interface{}
+func isJSONEquals(t *testing.T, expectedJSON string, actual any) bool {
+	var parsedExpected, parsedActual any
 	err := json.Unmarshal([]byte(expectedJSON), &parsedExpected)
 	if err != nil {
 		t.Errorf("Unable to parse expected value as JSON: %v", err)
@@ -318,16 +332,20 @@ func isJSONEquals(t *testing.T, expectedJSON string, actual interface{}) bool {
 // both are consistent. If they aren't, the expected and actual structures are pretty-printed and
 // shown for comparison.
 //
-// This is useful for comparing structures that are built as nested map[string]interface{} values,
+// This is useful for comparing structures that are built as nested map[string]any values,
 // which are a pain to construct as literals.
-func AssertJSONEquals(t *testing.T, expectedJSON string, actual interface{}) {
+func AssertJSONEquals(t *testing.T, expectedJSON string, actual any) {
+	t.Helper()
+
 	if !isJSONEquals(t, expectedJSON, actual) {
 		logFatal(t, "The generated JSON structure differed.")
 	}
 }
 
 // CheckJSONEquals is similar to AssertJSONEquals, but nonfatal.
-func CheckJSONEquals(t *testing.T, expectedJSON string, actual interface{}) {
+func CheckJSONEquals(t *testing.T, expectedJSON string, actual any) {
+	t.Helper()
+
 	if !isJSONEquals(t, expectedJSON, actual) {
 		logError(t, "The generated JSON structure differed.")
 	}
@@ -336,6 +354,8 @@ func CheckJSONEquals(t *testing.T, expectedJSON string, actual interface{}) {
 // AssertNoErr is a convenience function for checking whether an error value is
 // an actual error
 func AssertNoErr(t *testing.T, e error) {
+	t.Helper()
+
 	if e != nil {
 		logFatal(t, fmt.Sprintf("unexpected error %s", yellow(e.Error())))
 	}
@@ -344,13 +364,31 @@ func AssertNoErr(t *testing.T, e error) {
 // AssertErr is a convenience function for checking whether an error value is
 // nil
 func AssertErr(t *testing.T, e error) {
+	t.Helper()
+
 	if e == nil {
 		logFatal(t, "expected error, got nil")
 	}
 }
 
+// AssertErrIs is a convenience function for checking whether an error value is
+// target one
+func AssertErrIs(t *testing.T, e error, target error) {
+	t.Helper()
+
+	if e == nil {
+		logFatal(t, "expected error, got nil")
+	}
+
+	if !errors.Is(e, target) {
+		logFatal(t, fmt.Sprintf("expected error %v, got %v", target, e))
+	}
+}
+
 // CheckNoErr is similar to AssertNoErr, except with a non-fatal error
 func CheckNoErr(t *testing.T, e error) {
+	t.Helper()
+
 	if e != nil {
 		logError(t, fmt.Sprintf("unexpected error %s", yellow(e.Error())))
 	}
@@ -363,7 +401,9 @@ func CheckNoErr(t *testing.T, e error) {
 //
 // CheckErr panics if expected contains anything other than non-nil pointers to
 // either a type that implements error, or to any interface type.
-func CheckErr(t *testing.T, e error, expected ...interface{}) {
+func CheckErr(t *testing.T, e error, expected ...any) {
+	t.Helper()
+
 	if e == nil {
 		logError(t, "expected error, got nil")
 		return
@@ -381,6 +421,8 @@ func CheckErr(t *testing.T, e error, expected ...interface{}) {
 
 // AssertIntLesserOrEqual verifies that first value is lesser or equal than second values
 func AssertIntLesserOrEqual(t *testing.T, v1 int, v2 int) {
+	t.Helper()
+
 	if !(v1 <= v2) {
 		logFatal(t, fmt.Sprintf("The first value \"%v\" is greater than the second value \"%v\"", v1, v2))
 	}
@@ -388,6 +430,8 @@ func AssertIntLesserOrEqual(t *testing.T, v1 int, v2 int) {
 
 // AssertIntGreaterOrEqual verifies that first value is greater or equal than second values
 func AssertIntGreaterOrEqual(t *testing.T, v1 int, v2 int) {
+	t.Helper()
+
 	if !(v1 >= v2) {
 		logFatal(t, fmt.Sprintf("The first value \"%v\" is lesser than the second value \"%v\"", v1, v2))
 	}

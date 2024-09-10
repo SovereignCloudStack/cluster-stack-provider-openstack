@@ -15,8 +15,9 @@ import (
 	"github.com/gophercloud/utils/v2/gnocchi"
 	"github.com/gophercloud/utils/v2/internal"
 
-	"github.com/hashicorp/go-uuid"
-	yaml "gopkg.in/yaml.v2"
+	"github.com/gofrs/uuid/v5"
+
+	yaml "gopkg.in/yaml.v3"
 )
 
 // AuthType respresents a valid method of authentication.
@@ -331,7 +332,7 @@ func GetCloudFromYAML(opts *ClientOpts) (*Cloud, error) {
 
 	cloud.Interface = ""
 
-	return cloud, nil
+	return cloud, err
 }
 
 // AuthOptions creates a gophercloud.AuthOptions structure with the
@@ -890,8 +891,6 @@ func NewServiceClient(ctx context.Context, service string, opts *ClientOpts) (*g
 		return openstack.NewBareMetalV1(pClient, eo)
 	case "baremetal-introspection":
 		return openstack.NewBareMetalIntrospectionV1(pClient, eo)
-	case "clustering":
-		return openstack.NewClusteringV1(pClient, eo)
 	case "compute":
 		return openstack.NewComputeV2(pClient, eo)
 	case "container":
@@ -919,17 +918,17 @@ func NewServiceClient(ctx context.Context, service string, opts *ClientOpts) (*g
 			return nil, fmt.Errorf("invalid identity API version")
 		}
 	case "image":
-		return openstack.NewImageServiceV2(pClient, eo)
+		return openstack.NewImageV2(pClient, eo)
 	case "key-manager":
 		return openstack.NewKeyManagerV1(pClient, eo)
 	case "load-balancer":
 		return openstack.NewLoadBalancerV2(pClient, eo)
 	case "messaging":
-		clientID, err := uuid.GenerateUUID()
+		clientID, err := uuid.NewV4()
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate UUID: %w", err)
 		}
-		return openstack.NewMessagingV2(pClient, clientID, eo)
+		return openstack.NewMessagingV2(pClient, clientID.String(), eo)
 	case "network":
 		return openstack.NewNetworkV2(pClient, eo)
 	case "object-store":
