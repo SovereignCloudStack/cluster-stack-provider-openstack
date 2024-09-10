@@ -111,7 +111,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 			apiv1alpha1.ClusterStackReleaseAssetsReadyCondition,
 			apiv1alpha1.IssueWithReleaseAssetsReason,
 			clusterv1beta1.ConditionSeverityError,
-			err.Error(),
+			"%s", err.Error(),
 		)
 		record.Warnf(openstackclusterstackrelease, "IssueWithReleaseAssets", err.Error())
 		logger.Error(err, "failed to create release")
@@ -127,7 +127,7 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 				apiv1alpha1.AssetsClientAPIAvailableCondition,
 				apiv1alpha1.FailedCreateAssetsClientReason,
 				clusterv1beta1.ConditionSeverityError,
-				err.Error(),
+				"%s", err.Error(),
 			)
 			record.Warnf(openstackclusterstackrelease, "FailedCreateAssetsClient", err.Error())
 			logger.Error(err, "failed to create assets client")

@@ -19,24 +19,24 @@
 # Install Lychee
 FROM docker.io/lycheeverse/lychee:0.15.1 as lychee
 # Install Hadolint
-FROM docker.io/hadolint/hadolint:v2.12.0-alpine@sha256:7dba9a9f1a0350f6d021fb2f6f88900998a4fb0aaf8e4330aa8c38544f04db42 as hadolint
+FROM docker.io/hadolint/hadolint:v2.12.0-alpine@sha256:3c206a451cec6d486367e758645269fd7d696c5ccb6ff59d8b03b0e45268a199 as hadolint
 
 FROM cgr.dev/chainguard/wolfi-base:latest as wolfi
 
 # update: datasource=github-tags depName=kubernetes-sigs/cluster-api
-ENV CLUSTERCTL_VERSION="v1.7.3"
+ENV CLUSTERCTL_VERSION="v1.8.2"
 # update: datasource=github-tags depName=golangci/golangci-lint
-ENV GOLANGCI_VERSION="v1.59.1"
+ENV GOLANGCI_VERSION="v1.60.3"
 # update: datasource=github-tags depName=kubernetes-sigs/kind
-ENV KIND_VERSION="v0.23.0"
+ENV KIND_VERSION="v0.24.0"
 # update: datasource=github-tags depName=kubernetes/kubernetes
 ARG KUBECTL_VERSION="v1.31.0"
 # update: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize\/v(?<version>.+)$
 ENV KUSTOMIZE_VERSION="v5.3.0"
 # update: datasource=github-tags depName=aquasecurity/trivy
-ENV TRIVY_VERSION="v0.52.2"
+ENV TRIVY_VERSION="v0.55.0"
 # update: datasource=github-tags depName=kubernetes-sigs/controller-tools
-ENV CONTROLLER_GEN_VERSION="v0.15.0"
+ENV CONTROLLER_GEN_VERSION="v0.16.2"
 
 # hadolint ignore=DL3018
 RUN apk add -U --no-cache \

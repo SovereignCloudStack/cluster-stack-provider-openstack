@@ -108,7 +108,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 				apiv1alpha1.CloudAvailableCondition,
 				apiv1alpha1.SecretNotFoundReason,
 				clusterv1beta1.ConditionSeverityError,
-				err.Error(),
+				"%s", err.Error(),
 			)
 			record.Warnf(openstacknodeimagerelease, "SecretNotFound", err.Error())
 			logger.Error(err, "failed to get secret")
@@ -118,7 +118,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			apiv1alpha1.CloudAvailableCondition,
 			apiv1alpha1.CloudNotSetReason,
 			clusterv1beta1.ConditionSeverityError,
-			err.Error(),
+			"%s", err.Error(),
 		)
 		record.Warnf(openstacknodeimagerelease, "CloudNotSet", err.Error())
 		return ctrl.Result{}, fmt.Errorf("failed to get cloud from secret: %w", err)
@@ -172,7 +172,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			apiv1alpha1.OpenStackImageServiceClientAvailableCondition,
 			apiv1alpha1.OpenStackImageServiceClientNotSetReason,
 			clusterv1beta1.ConditionSeverityError,
-			err.Error(),
+			"%s", err.Error(),
 		)
 		record.Warnf(openstacknodeimagerelease, "OpenStackImageServiceClientNotSet", err.Error())
 		logger.Error(err, "failed to create an image client")
@@ -187,7 +187,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			apiv1alpha1.OpenStackImageReadyCondition,
 			apiv1alpha1.IssueWithOpenStackImageReason,
 			clusterv1beta1.ConditionSeverityError,
-			err.Error(),
+			"%s", err.Error(),
 		)
 		record.Warnf(openstacknodeimagerelease, "OpenStackImageFailedToFind", err.Error())
 		logger.Error(err, "failed to find an image")
@@ -207,7 +207,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 				apiv1alpha1.OpenStackImageReadyCondition,
 				apiv1alpha1.IssueWithOpenStackImageReason,
 				clusterv1beta1.ConditionSeverityError,
-				err.Error(),
+				"%s", err.Error(),
 			)
 			record.Warnf(openstacknodeimagerelease, "OpenStackImageFailedToCreate", err.Error())
 			logger.Error(err, "failed to create an image")
@@ -225,7 +225,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 				apiv1alpha1.OpenStackImageReadyCondition,
 				apiv1alpha1.IssueWithOpenStackImageReason,
 				clusterv1beta1.ConditionSeverityError,
-				err.Error(),
+				"%s", err.Error(),
 			)
 			record.Warnf(openstacknodeimagerelease, "OpenStackImageFailedToImport", err.Error())
 			logger.Error(err, "failed to import an image")
@@ -246,7 +246,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			apiv1alpha1.OpenStackImageReadyCondition,
 			apiv1alpha1.IssueWithOpenStackImageReason,
 			clusterv1beta1.ConditionSeverityError,
-			err.Error(),
+			"%s", err.Error(),
 		)
 		record.Warnf(openstacknodeimagerelease, "OpenStackImageFailedToGet", err.Error())
 		logger.Error(err, "failed to get an image")
@@ -268,7 +268,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 				apiv1alpha1.OpenStackImageReadyCondition,
 				apiv1alpha1.OpenStackImageImportTimeOutReason,
 				clusterv1beta1.ConditionSeverityError,
-				err.Error(),
+				"%s", err.Error(),
 			)
 			record.Warnf(openstacknodeimagerelease, "OpenStackImageImportTimeout", err.Error())
 			logger.Error(err, "timeout - import duration exceeded")
@@ -294,7 +294,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			apiv1alpha1.OpenStackImageReadyCondition,
 			apiv1alpha1.IssueWithOpenStackImageReason,
 			clusterv1beta1.ConditionSeverityError,
-			err.Error(),
+			"%s", err.Error(),
 		)
 		openstacknodeimagerelease.Status.Ready = false
 		record.Warnf(openstacknodeimagerelease, "OpenStackImageStatusUnexpected", err.Error())
@@ -317,7 +317,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 			apiv1alpha1.OpenStackImageReadyCondition,
 			apiv1alpha1.IssueWithOpenStackImageReason,
 			clusterv1beta1.ConditionSeverityError,
-			err.Error(),
+			"%s", err.Error(),
 		)
 		openstacknodeimagerelease.Status.Ready = false
 		record.Warnf(openstacknodeimagerelease, "OpenStackImageStatusUnknown", err.Error())
