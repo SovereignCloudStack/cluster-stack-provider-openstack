@@ -2,21 +2,21 @@ module github.com/SovereignCloudStack/cluster-stack-provider-openstack
 
 go 1.22.0
 
-toolchain go1.23.0
+toolchain go1.23.1
 
 require (
 	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.7
-	github.com/gophercloud/gophercloud/v2 v2.0.0-beta.2
-	github.com/gophercloud/utils/v2 v2.0.0-20240305212012-b57aefba4cdb
+	github.com/gophercloud/gophercloud/v2 v2.0.0
+	github.com/gophercloud/utils/v2 v2.0.0-20240812072210-8ce1fc0f2894
 	github.com/onsi/ginkgo/v2 v2.19.1
-	github.com/onsi/gomega v1.34.0
+	github.com/onsi/gomega v1.34.2
 	github.com/stretchr/testify v1.9.0
 	k8s.io/api v0.30.3
 	k8s.io/apimachinery v0.30.3
 	k8s.io/client-go v0.30.3
 	k8s.io/klog/v2 v2.130.1
 	sigs.k8s.io/cluster-api v1.8.1
-	sigs.k8s.io/cluster-api-provider-openstack v0.9.0
+	sigs.k8s.io/cluster-api-provider-openstack v0.9.2
 	sigs.k8s.io/controller-runtime v0.18.5
 	sigs.k8s.io/yaml v1.4.0
 )
