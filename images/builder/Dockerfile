@@ -30,7 +30,7 @@ ENV GOLANGCI_VERSION="v1.60.3"
 # update: datasource=github-tags depName=kubernetes-sigs/kind
 ENV KIND_VERSION="v0.24.0"
 # update: datasource=github-tags depName=kubernetes/kubernetes
-ARG KUBECTL_VERSION="v1.27.3"
+ARG KUBECTL_VERSION="v1.31.0"
 # update: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize\/v(?<version>.+)$
 ENV KUSTOMIZE_VERSION="v5.3.0"
 # update: datasource=github-tags depName=aquasecurity/trivy
@@ -54,7 +54,7 @@ RUN curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/in
 ############################
 # CSPO Build Image Base #
 ############################
-FROM docker.io/library/golang:1.21.8-bullseye
+FROM docker.io/library/golang:1.23.0-bullseye
 
 # update: datasource=github-tags depName=adrienverge/yamllint versioning=semver
 ENV YAMLLINT_VERSION="v1.35.1"

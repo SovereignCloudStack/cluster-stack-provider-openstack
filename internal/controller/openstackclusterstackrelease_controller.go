@@ -19,14 +19,13 @@ package controller
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	githubclient "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client"
+	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient"
 	"github.com/SovereignCloudStack/cluster-stack-operator/pkg/release"
 	apiv1alpha1 "github.com/SovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -49,7 +48,7 @@ import (
 type OpenStackClusterStackReleaseReconciler struct {
 	client.Client
 	Scheme                                         *runtime.Scheme
-	GitHubClientFactory                            githubclient.Factory
+	AssetsClientFactory                            assetsclient.Factory
 	ReleaseDirectory                               string
 	openStackClusterStackRelDownloadDirectoryMutex sync.Mutex
 }
@@ -60,7 +59,6 @@ type NodeImages struct {
 }
 
 const (
-	metadataFileName                             = "metadata.yaml"
 	nodeImagesFileName                           = "node-images.yaml"
 	waitForOpenStackNodeImageReleasesBecomeReady = 30 * time.Second
 )
@@ -123,28 +121,28 @@ func (r *OpenStackClusterStackReleaseReconciler) Reconcile(ctx context.Context, 
 	if download {
 		conditions.MarkFalse(openstackclusterstackrelease, apiv1alpha1.ClusterStackReleaseAssetsReadyCondition, apiv1alpha1.ReleaseAssetsNotDownloadedYetReason, clusterv1beta1.ConditionSeverityInfo, "assets not downloaded yet")
 
-		gc, err := r.GitHubClientFactory.NewClient(ctx)
+		ac, err := r.AssetsClientFactory.NewClient(ctx)
 		if err != nil {
 			conditions.MarkFalse(openstackclusterstackrelease,
-				apiv1alpha1.GitAPIAvailableCondition,
-				apiv1alpha1.GitTokenOrEnvVariableNotSetReason,
+				apiv1alpha1.AssetsClientAPIAvailableCondition,
+				apiv1alpha1.FailedCreateAssetsClientReason,
 				clusterv1beta1.ConditionSeverityError,
 				err.Error(),
 			)
-			record.Warnf(openstackclusterstackrelease, "GitTokenOrEnvVariableNotSet", err.Error())
-			logger.Error(err, "failed to create Github client")
+			record.Warnf(openstackclusterstackrelease, "FailedCreateAssetsClient", err.Error())
+			logger.Error(err, "failed to create assets client")
 			return ctrl.Result{}, nil
 		}
 
-		conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.GitAPIAvailableCondition)
+		conditions.MarkTrue(openstackclusterstackrelease, apiv1alpha1.AssetsClientAPIAvailableCondition)
 
-		// this is the point where we download the release from github
+		// this is the point where we download the release from repository
 		// acquire lock so that only one reconcile loop can download the release
 		r.openStackClusterStackRelDownloadDirectoryMutex.Lock()
 
 		defer r.openStackClusterStackRelDownloadDirectoryMutex.Unlock()
 
-		if err := downloadReleaseAssets(ctx, releaseTag, releaseAssets.LocalDownloadPath, gc); err != nil {
+		if err := downloadReleaseAssets(ctx, releaseTag, releaseAssets.LocalDownloadPath, ac); err != nil {
 			logger.Error(err, "failed to download release assets")
 			return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 		}
@@ -237,7 +235,7 @@ func (r *OpenStackClusterStackReleaseReconciler) createOrUpdateOpenStackNodeImag
 	}
 
 	// Unexpected error
-	if err != nil && !apierrors.IsNotFound(err) {
+	if !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to get OpenStackNodeImageRelease: %w", err)
 	}
 
@@ -283,18 +281,8 @@ func (r *OpenStackClusterStackReleaseReconciler) getOwnedOpenStackNodeImageRelea
 	return ownedOpenStackNodeImageReleases, nil
 }
 
-func downloadReleaseAssets(ctx context.Context, releaseTag, downloadPath string, gc githubclient.Client) error {
-	repoRelease, resp, err := gc.GetReleaseByTag(ctx, releaseTag)
-	if err != nil {
-		return fmt.Errorf("failed to fetch release tag %q: %w", releaseTag, err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to fetch release tag %s with status code %d", releaseTag, resp.StatusCode)
-	}
-
-	assetlist := []string{metadataFileName, nodeImagesFileName}
-
-	if err := gc.DownloadReleaseAssets(ctx, repoRelease, downloadPath, assetlist); err != nil {
+func downloadReleaseAssets(ctx context.Context, releaseTag, downloadPath string, ac assetsclient.Client) error {
+	if err := ac.DownloadReleaseAssets(ctx, releaseTag, downloadPath); err != nil {
 		// if download failed for some reason, delete the release directory so that it can be retried in the next reconciliation
 		if err := os.RemoveAll(downloadPath); err != nil {
 			return fmt.Errorf("failed to remove release: %w", err)
