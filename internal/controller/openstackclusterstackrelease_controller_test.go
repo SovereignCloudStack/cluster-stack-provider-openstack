@@ -20,13 +20,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
-	githubmocks "github.com/SovereignCloudStack/cluster-stack-operator/pkg/github/client/mocks"
+	assetsclientmocks "github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/mocks"
 	apiv1alpha1 "github.com/SovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
-	"github.com/google/go-github/v52/github"
 	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/images"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -203,26 +201,11 @@ func TestDownloadReleaseAssets(t *testing.T) {
 	ctx := context.TODO()
 	releaseTag := "v1.0.0"
 	downloadPath := "/tmp/download"
-	assetlist := []string{metadataFileName, nodeImagesFileName}
-	mockGitHubClient := githubmocks.NewClient(t)
-	mockHTTPResponse := &http.Response{
-		StatusCode: http.StatusOK,
-	}
-	mockResponse := &github.Response{
-		Response: mockHTTPResponse,
-	}
-	mockRepoRelease := &github.RepositoryRelease{
-		Name: github.String("test-release-name"),
-	}
+	mockAssetsClient := assetsclientmocks.NewClient(t)
 
-	mockGitHubClient.On("GetReleaseByTag", ctx, releaseTag).Return(mockRepoRelease, mockResponse, nil)
-	repoRelease, resp, err := mockGitHubClient.GetReleaseByTag(ctx, releaseTag)
-	assert.NoError(t, err)
-	assert.Equal(t, resp.StatusCode, http.StatusOK)
+	mockAssetsClient.On("DownloadReleaseAssets", ctx, releaseTag, downloadPath).Return(nil)
 
-	mockGitHubClient.On("DownloadReleaseAssets", ctx, repoRelease, downloadPath, assetlist).Return(nil)
-
-	err = downloadReleaseAssets(ctx, releaseTag, downloadPath, mockGitHubClient)
+	err := downloadReleaseAssets(ctx, releaseTag, downloadPath, mockAssetsClient)
 
 	assert.NoError(t, err)
 }
@@ -230,26 +213,12 @@ func TestDownloadReleaseAssets(t *testing.T) {
 func TestDownloadReleaseAssetsFailedToDownload(t *testing.T) {
 	ctx := context.TODO()
 	releaseTag := "v1.0.0"
-	mockGitHubClient := githubmocks.NewClient(t)
 	downloadPath := "/tmp/download"
-	assetlist := []string{metadataFileName, nodeImagesFileName}
-	mockHTTPResponse := &http.Response{
-		StatusCode: http.StatusOK,
-	}
-	mockResponse := &github.Response{
-		Response: mockHTTPResponse,
-	}
-	mockRepoRelease := &github.RepositoryRelease{
-		Name: github.String("test-release-name"),
-	}
+	mockAssetsClient := assetsclientmocks.NewClient(t)
 
-	mockGitHubClient.On("GetReleaseByTag", ctx, releaseTag).Return(mockRepoRelease, mockResponse, nil)
-	repoRelease, resp, err := mockGitHubClient.GetReleaseByTag(ctx, releaseTag)
-	assert.NoError(t, err)
-	assert.Equal(t, resp.StatusCode, http.StatusOK)
+	mockAssetsClient.On("DownloadReleaseAssets", ctx, releaseTag, downloadPath).Return(errors.New("failed to download release assets"))
 
-	mockGitHubClient.On("DownloadReleaseAssets", ctx, repoRelease, downloadPath, assetlist).Return(errors.New("failed to download release assets"))
-	err = downloadReleaseAssets(ctx, releaseTag, downloadPath, mockGitHubClient)
+	err := downloadReleaseAssets(ctx, releaseTag, downloadPath, mockAssetsClient)
 
 	assert.ErrorContains(t, err, "failed to download release assets")
 }

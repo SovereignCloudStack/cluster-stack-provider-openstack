@@ -24,31 +24,6 @@ rules:
   - infrastructure.clusterstack.x-k8s.io
   resources:
   - openstackclusterstackreleases
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - infrastructure.clusterstack.x-k8s.io
-  resources:
-  - openstackclusterstackreleases/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - infrastructure.clusterstack.x-k8s.io
-  resources:
-  - openstackclusterstackreleases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.clusterstack.x-k8s.io
-  resources:
   - openstacknodeimagereleases
   verbs:
   - create
@@ -61,12 +36,14 @@ rules:
 - apiGroups:
   - infrastructure.clusterstack.x-k8s.io
   resources:
+  - openstackclusterstackreleases/finalizers
   - openstacknodeimagereleases/finalizers
   verbs:
   - update
 - apiGroups:
   - infrastructure.clusterstack.x-k8s.io
   resources:
+  - openstackclusterstackreleases/status
   - openstacknodeimagereleases/status
   verbs:
   - get
