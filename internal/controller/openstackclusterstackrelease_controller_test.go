@@ -25,7 +25,7 @@ import (
 
 	assetsclientmocks "github.com/SovereignCloudStack/cluster-stack-operator/pkg/assetsclient/mocks"
 	apiv1alpha1 "github.com/SovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
-	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
