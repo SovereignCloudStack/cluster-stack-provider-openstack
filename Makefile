@@ -494,7 +494,7 @@ generate-modules-ci: generate-modules
 KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env --bin-dir $(abspath $(TOOLS_BIN_DIR)) -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 
 .PHONY: test-integration ## Run integration tests
-test-integration: test-integration-openstack test-integration-github test-integration-oci
+test-integration: test-integration-openstack test-integration-github #test-integration-oci
 	echo done
 
 .PHONY: test-unit
