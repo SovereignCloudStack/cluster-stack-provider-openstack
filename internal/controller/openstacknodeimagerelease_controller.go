@@ -28,8 +28,8 @@ import (
 	apiv1alpha1 "github.com/SovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
 	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/openstack"
-	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/imageimport"
-	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/imageimport"
+	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
 	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -166,7 +166,7 @@ func (r *OpenStackNodeImageReleaseReconciler) Reconcile(ctx context.Context, req
 	}
 
 	// Create an OpenStack image service client
-	imageClient, err := openstack.NewImageServiceV2(providerClient, gophercloud.EndpointOpts{Region: cloud.RegionName})
+	imageClient, err := openstack.NewImageV2(providerClient, gophercloud.EndpointOpts{Region: cloud.RegionName})
 	if err != nil {
 		conditions.MarkFalse(openstacknodeimagerelease,
 			apiv1alpha1.OpenStackImageServiceClientAvailableCondition,
