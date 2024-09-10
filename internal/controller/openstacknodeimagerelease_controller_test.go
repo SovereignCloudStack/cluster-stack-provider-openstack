@@ -23,8 +23,8 @@ import (
 	"testing"
 
 	apiv1alpha1 "github.com/SovereignCloudStack/cluster-stack-provider-openstack/api/v1alpha1"
-	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/imageimport"
-	"github.com/gophercloud/gophercloud/v2/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/imageimport"
+	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
 	th "github.com/gophercloud/gophercloud/v2/testhelper"
 	fakeclient "github.com/gophercloud/gophercloud/v2/testhelper/client"
 	"github.com/gophercloud/utils/v2/openstack/clientconfig"
@@ -408,7 +408,7 @@ func TestGetImageIDNotFound(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Equal(t, "", imageID)
-	assert.Contains(t, err.Error(), fmt.Sprintf("failed to list images with name %s: Resource not found", imageFilter.Name))
+	assert.Contains(t, err.Error(), fmt.Sprintf("failed to list images with name %s: Expected HTTP response code [200 204 300]", imageFilter.Name))
 }
 
 // HandleImageCreationSuccessfully test setup.
@@ -513,7 +513,7 @@ func TestCreateImageFailed(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Nil(t, createdImage)
-	assert.EqualError(t, err, fmt.Sprintf("failed to create image with name %s: Internal Server Error", createOpts.Name))
+	assert.Contains(t, err.Error(), fmt.Sprintf("failed to create image with name %s: Expected HTTP response code [201]", createOpts.Name))
 }
 
 // HandleImageImportSuccessfully test setup.
@@ -582,5 +582,5 @@ func TestImportImageError(t *testing.T) {
 	err := importImage(context.TODO(), fakeClient, imageID, createOpts)
 
 	assert.Error(t, err)
-	assert.EqualError(t, err, fmt.Sprintf("failed to import image with ID %s: Internal Server Error", imageID))
+	assert.Contains(t, err.Error(), fmt.Sprintf("failed to import image with ID %s: Expected HTTP response code [202]", imageID))
 }
