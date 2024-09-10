@@ -40,11 +40,11 @@ const (
 )
 
 const (
-	// GitAPIAvailableCondition is used when Git API is available.
-	GitAPIAvailableCondition = "GitAPIAvailable"
+	// AssetsClientAPIAvailableCondition is used when AssetsClient API is available.
+	AssetsClientAPIAvailableCondition = "AssetsClientAPIAvailable"
 
-	// GitTokenOrEnvVariableNotSetReason is used when user don't specify the token or environment variable.
-	GitTokenOrEnvVariableNotSetReason = "GitTokenOrEnvVariableNotSet" //#nosec
+	// FailedCreateAssetsClientReason is used when user don't specify the token or environment variable required for initializing the assets client.
+	FailedCreateAssetsClientReason = "FailedCreateAssetsClient" //#nosec
 )
 
 const (
