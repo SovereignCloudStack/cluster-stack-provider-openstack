@@ -31,6 +31,8 @@ const (
 )
 
 // OpenStackClusterSpec defines the desired state of OpenStackCluster.
+// +kubebuilder:validation:XValidation:rule="has(self.disableExternalNetwork) && self.disableExternalNetwork ? !has(self.bastion) || !has(self.bastion.floatingIP) : true",message="bastion floating IP cannot be set when disableExternalNetwork is true"
+// +kubebuilder:validation:XValidation:rule="has(self.disableExternalNetwork) && self.disableExternalNetwork ? has(self.disableAPIServerFloatingIP) && self.disableAPIServerFloatingIP : true",message="disableAPIServerFloatingIP cannot be false when disableExternalNetwork is true"
 type OpenStackClusterSpec struct {
 	// ManagedSubnets describe OpenStack Subnets to be created. Cluster actuator will create a network,
 	// subnets with the defined CIDR, and a router connected to these subnets. Currently only one IPv4
@@ -133,9 +135,9 @@ type OpenStackClusterSpec struct {
 	APIServerFixedIP optional.String `json:"apiServerFixedIP,omitempty"`
 
 	// APIServerPort is the port on which the listener on the APIServer
-	// will be created
+	// will be created. If specified, it must be an integer between 0 and 65535.
 	// +optional
-	APIServerPort optional.Int `json:"apiServerPort,omitempty"`
+	APIServerPort optional.UInt16 `json:"apiServerPort,omitempty"`
 
 	// ManagedSecurityGroups determines whether OpenStack security groups for the cluster
 	// will be managed by the OpenStack provider or whether pre-existing security groups will
@@ -279,7 +281,6 @@ type OpenStackClusterStatus struct {
 }
 
 // +genclient
-// +genclient:Namespaced
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=openstackclusters,scope=Namespaced,categories=cluster-api,shortName=osc
 // +kubebuilder:storageversion
@@ -323,6 +324,13 @@ type ManagedSecurityGroups struct {
 	// +kubebuilder:default=false
 	// +kubebuilder:validation:Required
 	AllowAllInClusterTraffic bool `json:"allowAllInClusterTraffic"`
+}
+
+var _ IdentityRefProvider = &OpenStackCluster{}
+
+// GetIdentifyRef returns the cluster's namespace and IdentityRef.
+func (c *OpenStackCluster) GetIdentityRef() (*string, *OpenStackIdentityReference) {
+	return &c.Namespace, &c.Spec.IdentityRef
 }
 
 func init() {
