@@ -2,7 +2,7 @@ module github.com/SovereignCloudStack/cluster-stack-provider-openstack
 
 go 1.22.0
 
-toolchain go1.23.1
+toolchain go1.23.3
 
 require (
 	github.com/SovereignCloudStack/cluster-stack-operator v0.1.0-alpha.7
