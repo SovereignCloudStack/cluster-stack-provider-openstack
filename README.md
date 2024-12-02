@@ -2,7 +2,7 @@
 
 [![GitHub Latest Release](https://img.shields.io/github/v/release/SovereignCloudStack/cluster-stack-provider-openstack?logo=github)](https://github.com/SovereignCloudStack/cluster-stack-provider-openstack/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/SovereignCloudStack/cluster-stack-provider-openstack)](https://goreportcard.com/report/github.com/SovereignCloudStack/cluster-stack-provider-openstack)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/license/apache-2-0/)
 
 ## Overview
 
@@ -24,11 +24,11 @@ Explore the documentation stored in the [docs](./docs) directory or view the ren
 
 |                         | CSO `v0.1.0-alpha.2` | CSO `v0.1.0-alpha.3` | CSO `v0.1.0-alpha.5` | CSO `v0.1.0-alpha.6` |
 | ----------------------- | -------------------- | -------------------- | -------------------- | -------------------- |
-| CSPO `v0.1.0-alpha.rc1` | ✓ |   |   |   |
-| CSPO `v0.1.0-alpha.1`   | ✓ | ✓ | ✓ | ✓ |
-| CSPO `v0.1.0-alpha.2`   | ✓ | ✓ | ✓ | ✓ |
-| CSPO `v0.1.0-alpha.3`   | ✓ | ✓ | ✓ | ✓ |
-| CSPO `v0.1.0-alpha.4`   | ✓ | ✓ | ✓ | ✓ |
+| CSPO `v0.1.0-alpha.rc1` | ✓                    |                      |                      |                      |
+| CSPO `v0.1.0-alpha.1`   | ✓                    | ✓                    | ✓                    | ✓                    |
+| CSPO `v0.1.0-alpha.2`   | ✓                    | ✓                    | ✓                    | ✓                    |
+| CSPO `v0.1.0-alpha.3`   | ✓                    | ✓                    | ✓                    | ✓                    |
+| CSPO `v0.1.0-alpha.4`   | ✓                    | ✓                    | ✓                    | ✓                    |
 
 ## Controllers
 
