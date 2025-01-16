@@ -421,7 +421,9 @@ func HandleImageCreationSuccessfully(t *testing.T) { //nolint: gocritic
 			"id": "test_id",
 			"name": "test_image",
 			"disk_format": "qcow2",
-			"container_format": "bare"
+			"container_format": "bare",
+			"architecture": "x86_64",
+			"hw_disk_bus": "scsi"
 		}`)
 
 		w.Header().Add("Content-Type", "application/json")
@@ -433,7 +435,9 @@ func HandleImageCreationSuccessfully(t *testing.T) { //nolint: gocritic
 			"disk_format": "qcow2",
 			"visibility": "shared",
 			"min_disk": 0,
-			"id": "test_id"
+			"id": "test_id",
+			"architecture": "x86_64",
+			"hw_disk_bus": "scsi"
 		}`)
 	})
 }
@@ -449,6 +453,7 @@ func TestCreateImage(t *testing.T) {
 		Name:            "test_image",
 		DiskFormat:      "qcow2",
 		ContainerFormat: "bare",
+		Properties:      map[string]string{"architecture": "x86_64", "hw_disk_bus": "scsi"},
 	}
 
 	fakeClient := fakeclient.ServiceClient()
@@ -462,7 +467,7 @@ func TestCreateImage(t *testing.T) {
 		ContainerFormat: "bare",
 		DiskFormat:      "qcow2",
 		Visibility:      "shared",
-		Properties:      map[string]interface{}{},
+		Properties:      map[string]any{"architecture": "x86_64", "hw_disk_bus": "scsi"},
 	}
 
 	assert.NoError(t, err)
