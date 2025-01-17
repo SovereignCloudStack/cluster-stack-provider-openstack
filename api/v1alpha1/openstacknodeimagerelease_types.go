@@ -42,7 +42,57 @@ type OpenStackNodeImage struct {
 }
 
 // CreateOpts represents options used to create an image.
-type CreateOpts images.CreateOpts
+// TODO: Reimplement logic to import `images.CreateOpts` from Gophercloud with a `Properties` override.
+// The current `images.CreateOpts` defines `json:"-"` for the `Properties` field, making it unsuitable
+// for proper unmarshalling required for `CreateOpts` used in Kubernetes resources
+// and `nodeimagerelease.yaml`.
+// One solution is to create a new struct specifically for unmarshalling
+// that embeds `images.CreateOpts` and redefines the `Properties` field to allow proper handling.
+type CreateOpts struct {
+	// Name is the name of the new image.
+	Name string `json:"name" required:"true"`
+
+	// Id is the the image ID.
+	ID string `json:"id,omitempty"`
+
+	// Visibility defines who can see/use the image.
+	Visibility *images.ImageVisibility `json:"visibility,omitempty"`
+
+	// Hidden is whether the image is listed in default image list or not.
+	//nolint:tagliatelle // Allow snake_case JSON tags
+	Hidden *bool `json:"os_hidden,omitempty"`
+
+	// Tags is a set of image tags.
+	Tags []string `json:"tags,omitempty"`
+
+	// ContainerFormat is the format of the
+	// container. Valid values are ami, ari, aki, bare, and ovf.
+	//nolint:tagliatelle // Allow snake_case JSON tags
+	ContainerFormat string `json:"container_format,omitempty"`
+
+	// DiskFormat is the format of the disk. If set,
+	// valid values are ami, ari, aki, vhd, vmdk, raw, qcow2, vdi,
+	// and iso.
+	//nolint:tagliatelle // Allow snake_case JSON tags
+	DiskFormat string `json:"disk_format,omitempty"`
+
+	// MinDisk is the amount of disk space in
+	// GB that is required to boot the image.
+	//nolint:tagliatelle // Allow snake_case JSON tags
+	MinDisk int `json:"min_disk,omitempty"`
+
+	// MinRAM is the amount of RAM in MB that
+	// is required to boot the image.
+	//nolint:tagliatelle // Allow snake_case JSON tags
+	MinRAM int `json:"min_ram,omitempty"`
+
+	// protected is whether the image is not deletable.
+	Protected *bool `json:"protected,omitempty"`
+
+	// properties is a set of properties, if any, that
+	// are associated with the image.
+	Properties map[string]string `json:"properties,omitempty"`
+}
 
 // OpenStackNodeImageReleaseStatus defines the observed state of OpenStackNodeImageRelease.
 type OpenStackNodeImageReleaseStatus struct {
