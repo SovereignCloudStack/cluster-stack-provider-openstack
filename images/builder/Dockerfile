@@ -24,19 +24,19 @@ FROM docker.io/hadolint/hadolint:v2.12.0-alpine@sha256:3c206a451cec6d486367e7586
 FROM cgr.dev/chainguard/wolfi-base:latest as wolfi
 
 # update: datasource=github-tags depName=kubernetes-sigs/cluster-api
-ENV CLUSTERCTL_VERSION="v1.8.5"
+ENV CLUSTERCTL_VERSION="v1.9.4"
 # update: datasource=github-tags depName=golangci/golangci-lint
-ENV GOLANGCI_VERSION="v1.62.2"
+ENV GOLANGCI_VERSION="v1.63.4"
 # update: datasource=github-tags depName=kubernetes-sigs/kind
-ENV KIND_VERSION="v0.25.0"
+ENV KIND_VERSION="v0.26.0"
 # update: datasource=github-tags depName=kubernetes/kubernetes
 ARG KUBECTL_VERSION="v1.31.0"
 # update: datasource=github-tags depName=kubernetes-sigs/kustomize extractVersion=^kustomize\/v(?<version>.+)$
 ENV KUSTOMIZE_VERSION="v5.3.0"
 # update: datasource=github-tags depName=aquasecurity/trivy
-ENV TRIVY_VERSION="v0.57.1"
+ENV TRIVY_VERSION="v0.58.2"
 # update: datasource=github-tags depName=kubernetes-sigs/controller-tools
-ENV CONTROLLER_GEN_VERSION="v0.16.5"
+ENV CONTROLLER_GEN_VERSION="v0.17.1"
 
 # hadolint ignore=DL3018
 RUN apk add -U --no-cache \
@@ -54,7 +54,7 @@ RUN curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/in
 ############################
 # CSPO Build Image Base #
 ############################
-FROM docker.io/library/golang:1.23.3-bullseye
+FROM docker.io/library/golang:1.23.5-bullseye
 
 # update: datasource=github-tags depName=adrienverge/yamllint versioning=semver
 ENV YAMLLINT_VERSION="v1.35.1"
