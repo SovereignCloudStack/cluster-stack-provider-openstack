@@ -73,7 +73,7 @@ jobs:
 
       # Load Golang cache build from GitHub
       - name: Load cspo Golang cache build from GitHub
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         id: cache
         with:
           path: /tmp/.cache/cspo
@@ -145,7 +145,7 @@ jobs:
 
       # Upload artifact digests
       - name: Upload artifact digests
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: image-digest
           path: image-digest
